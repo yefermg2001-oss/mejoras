@@ -1,0 +1,328 @@
+<script>
+  // Example starter JavaScript for disabling form submissions if there are invalid fields
+  (function () {
+    'use strict'
+
+    // Fetch all the forms we want to apply custom Bootstrap validation styles to
+    var forms = document.querySelectorAll('.formMapa')
+    var status = document.getElementById("estadoForm")
+    var addConocimiento = document.getElementById("addConocimiento")
+
+    // Loop over them and prevent submission
+    Array.prototype.slice.call(forms)
+      .forEach(function (form) {
+        addConocimiento.addEventListener('click', function (event) {
+          if (!form.checkValidity()) {
+            event.preventDefault()
+            event.stopPropagation()
+            form.classList.add('was-validated')
+          }
+          else {
+            event.preventDefault()
+            event.stopPropagation()
+            datosMapa()
+          }
+        }, false)
+      })
+
+    //Si existen modificaciones genera una alerta y cambia el status de registro para guardar la modificacion
+    Array.prototype.slice.call(forms)
+      .forEach(function (form) {
+        form.addEventListener('change', function (event) {
+          statusMapa = false
+          status.innerHTML = '<span class="badge" style="background-color:#EFECE1; color:#333;">En progreso</span>'
+        }, false)
+      })
+  })()
+
+  //funciones que se ejecutaran cuando la pagina carge
+  window.onload = function () {
+    //comprueba si se diligencio previamente y trae los datos
+    google.script.run.withSuccessHandler(filedForm).findDataAllMapa()
+    google.script.run.withSuccessHandler(cedulaMapa).userDatos()
+    google.script.run.withSuccessHandler(perfil).ShowValues()
+  };
+
+  perfil = (user) => {
+    const per = document.getElementById("perfil")
+    per.innerHTML = user.name
+
+  }
+
+  //Agrega la cédula a Mapa
+  function cedulaMapa(info) {
+    infoGeneral = info
+  }
+
+
+  //LLena el formlario con la información de la base de datos
+  function filedForm(info) {
+    info = JSON.parse(info)
+
+    var i = 0
+
+    //Contruimos la tabla de personas en caso de que sea necesario
+    if (info.status == true) {
+
+      //modificamos el array personas
+      for (i = 0; i < info.datos.length; i++) {
+        mapa.push({
+          cedula: info.datos[i][0],
+          tipo: info.datos[i][1],
+          conocimiento: info.datos[i][2],
+          nivel: info.datos[i][3],
+          documento: info.datos[i][4],
+          status: true,
+          id: info.datos[i][5] || 1
+        })
+        idMapa = info.datos[i][5] || 1
+      }
+      tablaConocimientos()
+    }
+
+    const valor = progreso()
+    barraProgreso(valor)
+    var status = document.getElementById("estadoForm")
+    status.innerHTML = '<span class="badge bg-success text-white">Guardado</span>'
+  }
+
+
+  //Get the button subir
+  let mybutton = document.getElementById("btn-back-to-top");
+
+  // When the user scrolls down 20px from the top of the document, show the button
+  window.onscroll = function () {
+    scrollFunction();
+  };
+
+  function scrollFunction() {
+    if (
+      document.body.scrollTop > 20 ||
+      document.documentElement.scrollTop > 20
+    ) {
+      mybutton.style.display = "block";
+    } else {
+      mybutton.style.display = "none";
+    }
+  }
+  // When the user clicks on the button, scroll to the top of the document
+  mybutton.addEventListener("click", backToTop);
+
+  function backToTop() {
+    document.body.scrollTop = 0;
+    document.documentElement.scrollTop = 0;
+  }
+
+  //Variables globales
+  var mapa = []
+  var mapaPost = []
+
+  var infoGeneral = {}
+  var statusMapa = false
+  var idMapa = 0
+  var docFile = {}
+
+  var docsDisponibles = 0
+  var docsCargados = 0
+
+  //Obtiene los datos del form y guarda inmediatamente
+  function datosMapa() {
+    const tipo = document.getElementById("tipo");
+    const conocimiento = document.getElementById("conocimiento");
+    const nivel = document.getElementById("nivel");
+    const documento = document.getElementById("documento");
+    const form = document.getElementById('formMapa');
+    var upload = false
+    var currentId = idMapa || 1
+
+    //Si no se carga ningun archivo el status es true para que no intente subirlo
+    if (documento.value == '') {
+      upload = true
+      docFile = ''
+    }
+
+    var nuevoItem = {
+      cedula: infoGeneral.cedula,
+      tipo: tipo.value,
+      conocimiento: conocimiento.value,
+      nivel: nivel.value,
+      documento: docFile,
+      status: upload,
+      id: currentId
+    }
+
+    mapa.push(nuevoItem)
+
+    // Si hay archivo, subirlo primero y después guardar
+    if (!upload && docFile != '') {
+      var itemIndex = mapa.length - 1
+      saveFileAndSave(docFile, itemIndex)
+    } else {
+      // Sin archivo: guardar directamente en el Sheet
+      var rowData = [infoGeneral.cedula, tipo.value, conocimiento.value, nivel.value, '', currentId]
+      google.script.run
+        .withSuccessHandler(function () {
+          console.log('✅ Conocimiento guardado: ' + conocimiento.value)
+          var status = document.getElementById("estadoForm")
+          status.innerHTML = '<span class="badge bg-success text-white">Guardado</span>'
+        })
+        .withFailureHandler(function (error) {
+          console.error('❌ Error guardando:', error)
+        })
+        .appendMapaRow(rowData);
+    }
+
+    //limpiamos los inputs
+    form.reset()
+    form.classList.remove('was-validated');
+
+    //Generamos la tabla
+    tablaConocimientos()
+    statusMapa = false
+
+    //calcula el progreso
+    const valor = progreso()
+    barraProgreso(valor)
+  }
+
+  //genera la tabla con los datos de las personas vinculadas
+  function tablaConocimientos() {
+
+    var tabla =
+      `<table class="table table-dark table-hover mb-4 text-center">
+          <thead class="bg-dark text-white">
+            <tr>
+              <th scope="col">Tipo</th>
+              <th scope="col">Conocimiento</th>
+              <th scope="col">Nivel</th>
+              <th scope="col">Documento</th>
+              <th scope="col">Eliminar</th>
+            </tr>
+          </thead>
+          <tbody>
+          ${mapa.map(function (conocimiento, index) {
+        return (
+          `<tr>
+                  <td>${conocimiento.tipo}</td>
+                  <td>${conocimiento.conocimiento}</td>
+                  <td>${conocimiento.nivel}</td>
+                  <td>${conocimiento.status ? conocimiento.documento ?
+            `<a href=${conocimiento.documento} target="_blank"><span><i class="far fa-eye"></i></i>
+                      </span></a>` :
+            `<span><i class="far fa-eye-slash"></i></i></i>
+                      </span></a>` : statusMapa ?
+            `<div>${conocimiento.documento.name} <div class="spinner-border spinner-border-sm 
+                      text-success" role="status">
+                      </div></div>`: conocimiento.documento.name
+          }
+                  </td>
+                  <td><span onclick="deleteConocimiento(${index})" style="color:#fff;cursor:pointer;"><i class="fas fa-trash"></i></span></td>
+                </tr>`
+        )
+      }).join(" ")
+      }
+          </tbody>
+        </table>`
+
+    document.getElementById("tablaConocimientos").innerHTML = tabla
+    document.documentElement.scrollTop = document.documentElement.scrollHeight;
+  }
+
+  //Permite eliminar un conocimiento del array y del Sheet
+  function deleteConocimiento(index) {
+    if (mapa.length > 0) {
+      var item = mapa[index];
+
+      // Eliminar del Sheet
+      google.script.run
+        .withSuccessHandler(function () {
+          console.log('✅ Eliminado del Sheet: ' + item.conocimiento)
+        })
+        .withFailureHandler(function (error) {
+          console.error('❌ Error eliminando:', error)
+        })
+        .eliminarMapaRow(item.cedula, item.tipo, item.conocimiento);
+
+      // Eliminar del array local
+      mapa.splice(index, 1)
+      if (mapa.length > 0) {
+        tablaConocimientos()
+      } else {
+        document.getElementById("tablaConocimientos").innerHTML = ""
+        const valor = progreso()
+        barraProgreso(valor)
+      }
+    }
+
+    var status = document.getElementById("estadoForm")
+    status.innerHTML = '<span class="badge" style="background-color:#EFECE1; color:#333;">En progreso</span>'
+  }
+
+
+  //calcula el progreso
+  function progreso() {
+    if (mapa.length > 0) {
+      var valor = 100
+    } else {
+      valor = 0
+    }
+    return valor
+  }
+
+  //Modifica la barra de progreso
+  function barraProgreso(valor) {
+    const barra = document.querySelector('.progress-bar')
+    barra.setAttribute("style", `width: ${valor}%`)
+    barra.setAttribute("aria-valuenow", valor)
+    barra.innerHTML = `${valor}%`
+  }
+
+  function objeto(file) {
+    docFile = file.files[0];
+  }
+
+  // Sube un archivo al Drive y luego guarda la fila en el Sheet
+  function saveFileAndSave(file, index) {
+    const idFolder = '1VEiz5HEo8nMCHiMG7X0z8MCxQg2ZsDSu'
+
+    const fr = new FileReader();
+    fr.onload = function (e) {
+      const obj = {
+        filename: file.name,
+        mimeType: file.type,
+        bytes: [...new Int8Array(e.target.result)]
+      };
+      // Subir archivo y luego guardar la fila
+      // Renombrar archivo: "Nombre - Conocimiento.ext"
+      var extension = file.name.split('.').pop();
+      obj.filename = (infoGeneral.nombre || infoGeneral.cedula) + " - " + mapa[index].conocimiento + " - " + mapa[index].nivel + "." + extension;
+
+      google.script.run.withSuccessHandler(function (data) {
+        const [estadoBlob, urlFile, idx] = data
+
+        if (estadoBlob == true) {
+          mapa[idx].documento = urlFile
+          mapa[idx].status = true
+        }
+        tablaConocimientos()
+
+        // Guardar la fila en el Sheet con la URL del archivo
+        var currentId = idMapa || 1
+        var rowData = [mapa[idx].cedula, mapa[idx].tipo, mapa[idx].conocimiento, mapa[idx].nivel, mapa[idx].documento, currentId]
+        google.script.run
+          .withSuccessHandler(function () {
+            console.log('✅ Conocimiento con archivo guardado: ' + mapa[idx].conocimiento)
+            var status = document.getElementById("estadoForm")
+            status.innerHTML = '<span class="badge bg-success text-white">Guardado</span>'
+          })
+          .withFailureHandler(function (error) {
+            console.error('❌ Error guardando con archivo:', error)
+          })
+          .appendMapaRow(rowData);
+
+      }).saveFile(obj, idFolder, index);
+    };
+    fr.readAsArrayBuffer(file);
+  }
+
+</script>

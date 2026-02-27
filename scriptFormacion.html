@@ -1,0 +1,871 @@
+<script>
+
+
+    /** @global */
+    var formacionAcademica = [];
+    var persona = {};
+    var ruta = "";
+    var archivos = [];
+    var indices = [];
+    var statusRegistro = false;
+    var formacionPost = []
+    var indice = 0;
+    var idPersonas = 0;
+    var banderaPersonas = 0;
+
+
+    var formAcademic = {
+
+        nivelEsc: '',
+        universidad: '',
+        titulo: '',
+        fechaGraduacion: '',
+        opEstudio: '',
+        formFile: '',
+        switchCheck: '',
+        numTarjeta: '',
+        seccional: '',
+        expedicion: '',
+        convalidado: '',
+        permiso: '',
+        pais: ''
+    }
+
+
+    window.onload = function iniciar() {
+
+        //comprueba si se diligencio previamente y trae los datos
+        google.script.run.withSuccessHandler(filedForm).findDataRegistro2('Formación')
+        google.script.run.withSuccessHandler(perfil).ShowValues()
+
+
+    }
+
+
+    perfil = (user) => {
+
+        const per = document.getElementById("perfil")
+        per.innerHTML = user.name
+        persona.nombre = user.name
+
+    }
+
+    /**
+     * @function filedForm
+     * @param {string} info
+     * Carga todo la información solicitada al iniciar la página.
+     */
+    const filedForm = (info) => {
+
+        info = JSON.parse(info)
+        console.log(info.datos)
+
+
+        if (!Object.keys(info).length == 0) {
+
+
+            //Valida si el objeto info trae la opción Formación
+            if (info.global == "Formación") {
+
+                persona.cedula = info.datos[0][1]
+
+
+                //Ingresa los datos de la tabla formación
+                for (i = 0; i < info.datos.length; i++) {
+
+                    formacionAcademica.push({
+
+                        fecha: info.datos[i][0],
+                        cedula: info.datos[i][1],
+                        nivelEsc: info.datos[i][2],
+                        universidad: info.datos[i][3],
+                        titulo: info.datos[i][4],
+                        estado: info.datos[i][5],
+                        fechaGraduacion: info.datos[i][6],
+                        adjunto: info.datos[i][7],
+                        tarjeta: info.datos[i][8],
+                        numTarjeta: info.datos[i][9],
+                        seccional: info.datos[i][10],
+                        expedicion: info.datos[i][11],
+                        convalidado: info.datos[i][15],
+                        permiso: info.datos[i][16],
+                        pais: info.datos[i][17]
+
+
+                    })
+                    idPersonas = info.datos[i][12] || 1
+
+                    const valor = 100
+                    barraProgreso(valor)
+                    var status = document.getElementById("estadoForm")
+                    status.innerHTML = '<span class="badge bg-success text-white">Guardado</span>'
+                }
+
+                tablaVinculados()
+
+            } else if (info.global == "Registro") {
+
+                persona.cedula = info.datos[3]
+
+            }
+
+        } else {
+
+            var msn = `<div class="alert alert-warning alert-dismissible fade show" role="alert">
+                           <strong>No se encuntra registrado!</strong> Por favor realice previamente su registro antes de agregar formación academica.
+                           <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>`;
+
+            var noRegistro = document.getElementById('noRegistro')
+            noRegistro.innerHTML = msn;
+            console.log('Esta vacio')
+        }
+
+    }
+
+
+
+
+    /*
+    // Example starter JavaScript for disabling form submissions if there are invalid fields
+    (function () {
+      'use strict'
+    
+      // Fetch all the forms we want to apply custom Bootstrap validation styles to
+      var forms = document.querySelectorAll('.formFormacion')
+      var comprobar = document.getElementById('comprobar')
+      var status = document.getElementById("estadoForm")
+    
+      // Loop over them and prevent submission
+      Array.prototype.slice.call(forms)
+        .forEach(function (form) {
+          comprobar.addEventListener('click', function (event) {
+           status.innerHTML = '<span class="badge" style="background-color:#EFECE1; color:#333;">En progreso</span>'
+                        if (!form.checkValidity()) {
+                            event.preventDefault()
+                            event.stopPropagation()
+                            form.classList.add('was-validated')
+                        }
+                        else {
+                            event.preventDefault()
+                            datosPersonas()
+                            $('#exampleModal').modal('hide');
+                            document.getElementById('formFormacion').reset();
+                            document.getElementById('formFormacion').noValidate = false;
+                            
+                        }
+                    }, false)
+        })
+    
+         //Si existen modificaciones genera una alerta
+        Array.prototype.slice.call(forms)
+            .forEach(function (form) {
+                form.addEventListener('change', function (event) {
+                    status.innerHTML = '<span class="badge" style="background-color:#EFECE1; color:#333;">En progreso</span>'
+    
+                    //Modificamos la barra de progreso constantemente
+                    const valor = progreso()
+                    if (valor == 100) {
+                        status.innerHTML = '<span class="badge bg-success">Completo</span>'
+                    }
+                    barraProgreso(valor)
+    
+                }, false)
+            })
+    
+    
+    })()
+    
+    */
+
+    //Get the button subir
+    let mybutton = document.getElementById("btn-back-to-top");
+    // When the user clicks on the button, scroll to the top of the document
+    mybutton.addEventListener("click", backToTop);
+
+    // When the user scrolls down 20px from the top of the document, show the button
+    window.onscroll = function () {
+        scrollFunction();
+    };
+
+    function scrollFunction() {
+        if (
+            document.body.scrollTop > 20 ||
+            document.documentElement.scrollTop > 20
+        ) {
+            mybutton.style.display = "block";
+        } else {
+            mybutton.style.display = "none";
+        }
+    }
+
+
+    function backToTop() {
+        document.body.scrollTop = 0;
+        document.documentElement.scrollTop = 0;
+    }
+
+
+    //Modifica la barra de progreso
+    function barraProgreso(valor) {
+        const barra = document.querySelector('.progress-bar')
+        barra.setAttribute("style", `width: ${valor}%`)
+        barra.setAttribute("aria-valuenow", valor)
+        barra.innerHTML = `${valor}%`
+    }
+
+
+
+
+    //calcula el progreso
+    const progreso = () => {
+
+        let activos = 0
+        let validos = 0
+
+
+        for (item in formAcademic) {
+            const campo = document.getElementById(item)
+
+            if (!campo.hasAttribute('disabled')) {
+                activos += 1
+            }
+            if (campo.checkValidity() && !campo.hasAttribute('disabled')) {
+                validos += 1
+            }
+
+        }
+        let valor = Math.round(validos * 100 / activos)
+
+        console.log('este es el vaor ' + valor)
+        return valor
+
+    }
+
+
+    //Valida si esta estudiando actuamente y desabilita el campo de la fecha en caso de que este en curso
+    /**
+     * @function validacionEstudios
+     * Valida si el estado esta en curso o finalizado.
+     * @param {boolean} check
+    */
+    const validacionEstudios = (check) => {
+
+
+
+        if (check) {
+            document.getElementById("fechaGraduacion").disabled = true;
+            document.getElementById("fechaGraduacion").value = "";
+
+        } else {
+
+            document.getElementById("fechaGraduacion").disabled = false;
+
+        }
+    }
+
+    /**
+     * @function validacionTarjeta
+     * Valida que el check este activo y tenga tarjeta profesional.
+     * @param {boolean} check
+    */
+    const validacionTarjeta = (check) => {
+
+        if (check) {
+
+            document.getElementById("numTarjeta").disabled = false;
+            document.getElementById("seccional").disabled = false;
+            document.getElementById("expedicion").disabled = false;
+            document.getElementById("convalidado").disabled = false;
+            document.getElementById("permiso").disabled = false;
+            document.getElementById("pais").disabled = false;
+            document.querySelector('#numTarjeta').required = true;
+            document.querySelector('#seccional').required = true;
+            document.querySelector('#expedicion').required = true;
+            document.querySelector('#convalidado').required = true;
+            document.querySelector('#permiso').required = true;
+            document.querySelector('#pais').required = true;
+            document.getElementById("numTarjeta").focus()
+            console.log('ingreso en true')
+
+        } else {
+
+            document.getElementById("numTarjeta").disabled = true;
+            document.getElementById("numTarjeta").value = "";
+            document.getElementById("seccional").disabled = true;
+            document.getElementById("seccional").value = "";
+            document.getElementById("expedicion").disabled = true;
+            document.getElementById("expedicion").value = "";
+            document.getElementById("convalidado").disabled = true;
+            document.getElementById("convalidado").value = "";
+            document.getElementById("permiso").disabled = true;
+            document.getElementById("permiso").value = "";
+            document.getElementById("pais").disabled = true;
+            document.getElementById("pais").value = "";
+            document.querySelector('#numTarjeta').required = false;
+            document.querySelector('#seccional').required = false;
+            document.querySelector('#expedicion').required = false;
+            document.querySelector('#convalidado').required = false;
+            document.querySelector('#permiso').required = false;
+            document.querySelector('#pais').required = false;
+
+            console.log('ingreso en false')
+        }
+
+    }
+
+
+    /**
+     * @function limpiarForm
+     * Limpia los inputs del formulario
+    */
+    const limpiarForm = () => {
+
+        //document.getElementById('formFormacion').classList.remove("was-validated");
+        const formsA = document.getElementById('formFormacion')
+        const status = document.getElementById("estadoForm")
+
+        formsA.reset()
+
+        document.getElementById("fechaGraduacion").disabled = false;
+        document.getElementById("fechaGraduacion").value = '';
+        document.getElementById("opEstudio").checked = false;
+        document.getElementById("switchCheck").checked = false;
+
+
+        document.getElementById("numTarjeta").disabled = true;
+        document.getElementById("seccional").disabled = true;
+        document.getElementById("expedicion").disabled = true;
+        document.getElementById("convalidado").disabled = true;
+        document.getElementById("permiso").disabled = true;
+        document.getElementById("pais").disabled = true;
+
+
+        status.innerHTML = "";
+        //  barraProgreso(0)
+        $("#progress").css("display", "none");
+        $("#btnCargar").css("display", "none");
+        ruta = ""
+
+    }
+
+    /**
+     * @function datosPersonas
+     * valida la información del formulario y alimenta el array que genera la tabla
+    */
+    const datosPersonas = () => {
+
+        const nivelEsc = document.getElementById("nivelEsc");
+        const universidad = document.getElementById("universidad");
+        const titulo = document.getElementById("titulo");
+        const opEstudio = document.getElementById("opEstudio").checked;
+        const opTarjeta1 = document.getElementById("switchCheck").checked;
+        const fechaGraduacion = document.getElementById("fechaGraduacion");
+        const numTarjeta = document.getElementById("numTarjeta");
+        const seccional = document.getElementById("seccional");
+        const expedicion = document.getElementById("expedicion");
+        const convalidado = document.getElementById("convalidado");
+        const permiso = document.getElementById("permiso");
+        const pais = document.getElementById("pais");
+
+        if (opTarjeta1) {
+            var opTarjeta = "Si";
+        } else {
+            var opTarjeta = "No";
+        }
+
+        if (opEstudio) {
+            var opEst = "En curso"
+        } else {
+            var opEst = "Finalizado"
+        }
+
+        const fecha = (new Date(Date.now())).toLocaleDateString()
+        var currentId = idPersonas || 1
+
+        // Si hay archivo seleccionado, subirlo primero
+        if (archivos.length > 0) {
+            var file = archivos[0];
+            var extension = file.name.split('.').pop();
+            var nombrePersona = persona.nombre || persona.cedula || 'Usuario';
+            var nuevoNombre = nombrePersona + ' - ' + (nivelEsc.value || '') + ' - ' + (titulo.value || '') + '.' + extension;
+
+            var fr = new FileReader();
+            var idFolder = '1JF2FXbvXzwERPzkZkYaZctIJ3P5vnXIO';
+            fr.onload = function (e) {
+                var obj = {
+                    filename: nuevoNombre,
+                    mimeType: file.type,
+                    bytes: [...new Int8Array(e.target.result)]
+                };
+                $("#progress").css("display", "flex");
+                google.script.run
+                    .withSuccessHandler(function (data) {
+                        var urlArchivo = data[1] || '';
+                        $('#barra').removeClass('progress-bar-striped progress-bar-animated').addClass('bg-success');
+                        $('#barra').text('Completo');
+                        archivos = [];
+
+                        var nuevaFormacion = {
+                            fecha: fecha || "",
+                            cedula: persona.cedula || "",
+                            nivelEsc: nivelEsc.value || "",
+                            universidad: universidad.value || "",
+                            titulo: titulo.value || "",
+                            estado: opEst || "",
+                            fechaGraduacion: fechaGraduacion.value || "",
+                            adjunto: urlArchivo,
+                            tarjeta: opTarjeta || "",
+                            numTarjeta: numTarjeta.value || "",
+                            seccional: seccional.value || "",
+                            expedicion: expedicion.value || "",
+                            id: currentId,
+                            convalidado: convalidado.value || "",
+                            permiso: permiso.value || "",
+                            pais: pais.value || ""
+                        }
+                        formacionAcademica.push(nuevaFormacion)
+                        var rowData = Object.values(nuevaFormacion)
+                        google.script.run
+                            .withSuccessHandler(function () {
+                                console.log('\u2705 Formaci\u00f3n con archivo guardada: ' + nuevaFormacion.titulo)
+                                var status = document.getElementById("estadoForm")
+                                status.innerHTML = '<span class="badge bg-success text-white">Guardado</span>'
+                            })
+                            .withFailureHandler(function (error) {
+                                console.error('\u274c Error guardando:', error)
+                            })
+                            .appendFormacionRow(rowData);
+
+                        limpiarForm()
+                        tablaVinculados()
+                        $('#exampleModal').modal('hide');
+                    })
+                    .withFailureHandler(function (error) {
+                        console.error('\u274c Error subiendo archivo:', error)
+                        $('#barra').removeClass('progress-bar-striped progress-bar-animated').addClass('bg-danger');
+                        $('#barra').text('Error');
+                    })
+                    .saveFile2(obj, persona.cedula, idFolder);
+            };
+            fr.readAsArrayBuffer(file);
+        } else {
+            // Sin archivo: guardar directamente
+            var nuevaFormacion = {
+                fecha: fecha || "",
+                cedula: persona.cedula || "",
+                nivelEsc: nivelEsc.value || "",
+                universidad: universidad.value || "",
+                titulo: titulo.value || "",
+                estado: opEst || "",
+                fechaGraduacion: fechaGraduacion.value || "",
+                adjunto: ruta || "",
+                tarjeta: opTarjeta || "",
+                numTarjeta: numTarjeta.value || "",
+                seccional: seccional.value || "",
+                expedicion: expedicion.value || "",
+                id: currentId,
+                convalidado: convalidado.value || "",
+                permiso: permiso.value || "",
+                pais: pais.value || ""
+            }
+            formacionAcademica.push(nuevaFormacion)
+            var rowData = Object.values(nuevaFormacion)
+            google.script.run
+                .withSuccessHandler(function () {
+                    console.log('\u2705 Formaci\u00f3n guardada: ' + nuevaFormacion.titulo)
+                    var status = document.getElementById("estadoForm")
+                    status.innerHTML = '<span class="badge bg-success text-white">Guardado</span>'
+                    var toastMsn = {
+                        bg: "bg-success",
+                        title: "Guardado",
+                        msn: "Formaci\u00f3n guardada en la base de datos",
+                        icon: "fas fa-check"
+                    }
+                    alertaMsn(toastMsn)
+                })
+                .withFailureHandler(function (error) {
+                    console.error('\u274c Error guardando formaci\u00f3n:', error)
+                })
+                .appendFormacionRow(rowData);
+
+            limpiarForm()
+            tablaVinculados()
+            $('#exampleModal').modal('hide');
+        }
+    }
+
+
+
+
+    /**
+     * @function tablaVinculados
+     * Crea la tabla con los datos de la formación academica 
+     * @returns {String} Retorna el html de la tabla.
+     */
+    const tablaVinculados = () => {
+
+        var table = `
+          
+          <table class="table table-dark table-hover table-sm mb-4 text-center">
+            <thead class="bg-dark text-white">
+              <tr>
+                <th scope="col">Nivel Escolar</th>
+                <th scope="col">Universidad</th>
+                <th scope="col">Título</th>
+                <th scope="col">Estado</th>
+                <th scope="col">Tarjeta Profesional</th>
+                <th scope="col">Documento</th>
+                <th scope="col">Borrar</th>
+                <th scope="col">Editar</th>
+               
+              </tr>
+            </thead>
+            <tbody>
+            ${formacionAcademica.map(function (form, index) {
+            return (
+
+
+                `<tr>
+                  
+                    <td>${form.nivelEsc}</td>
+                    <td>${form.universidad}</td>
+                    <td>${form.titulo}</td>
+                    <td>${form.estado}</td>
+                    <td>${form.tarjeta}</td>
+                     <td>${form.adjunto != '' ?
+                    `<a href=${form.adjunto} target="_blank"><span><i class="far fa-eye"></i></i>
+                      </span></a>` :
+                    `<span><i class="far fa-eye-slash"></i></i></i>
+                      </span></a>`
+
+                }
+                  </td>
+                   
+
+                    <td>
+                         <button class="btn text-white" onclick="deleteFormacion(${index})">
+                         <i class="fas fa-trash"></i></button>
+                    </td>
+                      
+                     <td>
+                        <button onclick="editarFormacion(${index})" type="button"
+                        class="btn text-white" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                        <i class="fas fa-edit"></i>
+                        </button>
+                    </td>
+            </tr>`
+            )
+        }).join(" ")
+            }
+            </tbody>
+            
+          </table>`
+
+        document.getElementById("tablaPersonas").innerHTML = table
+        document.documentElement.scrollTop = document.documentElement.scrollHeight;
+
+    }
+
+
+
+    /**
+    * @function deleteFormacion 
+    * Permite eliminar un valor de un array
+    * @param {number} index
+    */
+    const deleteFormacion = (index) => {
+
+        var toastMsn = {
+            bg: "",
+            bgStyle: "background-color:#EFECE1; color:#333;",
+            title: "Eliminado",
+            msn: "Se ha eliminado el registro correctamente",
+            icon: "fas fa-exclamation-triangle"
+        }
+        alertaMsn(toastMsn)
+
+        if (formacionAcademica.length > 0) {
+
+            var item = formacionAcademica[index];
+
+            // Eliminar del Sheet
+            google.script.run
+                .withSuccessHandler(function (result) {
+                    console.log('\u2705 Formaci\u00f3n eliminada del Sheet: ' + item.titulo)
+                })
+                .withFailureHandler(function (error) {
+                    console.error('\u274c Error eliminando:', error)
+                })
+                .eliminarFormacionRow(persona.cedula, item.nivelEsc, item.titulo);
+
+            formacionAcademica.splice(index, 1)
+            console.log('Eliminado index ' + index)
+            if (formacionAcademica.length > 0) {
+                tablaVinculados()
+            } else {
+                document.getElementById("tablaPersonas").innerHTML = ""
+            }
+
+        } else {
+            formacionAcademica = []
+            document.getElementById("tablaPersonas").innerHTML = ""
+        }
+
+        var status = document.getElementById("estadoForm")
+        status.innerHTML = '<span class="badge" style="background-color:#EFECE1; color:#333;">En progreso</span>'
+        statusRegistro = false
+    }
+
+
+    /**
+     * @function editarFormacion 
+     * Permite ditar un valor de un array
+     * @param {number} index
+     */
+    const editarFormacion = (index) => {
+        indice = index;
+
+        //Creamos el boton para aplicar cambios en la edición
+        const buttonApply = `<button onclick="aplicarFormacion()"id="addFormacion" type="button" class="btn btn-primary">Aplicar  Cambios</button>`
+
+        const bntAplicar = document.getElementById('bntAplicar')
+        bntAplicar.innerHTML = buttonApply;
+
+        const nivelEsc = document.getElementById("nivelEsc")
+        const universidad = document.getElementById("universidad")
+        const titulo = document.getElementById("titulo")
+
+        const opEstudio = document.getElementById("opEstudio")
+        const opTarjeta1 = document.getElementById("switchCheck")
+        const fechaGraduacion = document.getElementById("fechaGraduacion")
+        const numTarjeta = document.getElementById("numTarjeta")
+        const seccional = document.getElementById("seccional")
+        const expedicion = document.getElementById("expedicion")
+        const convalidado = document.getElementById("convalidado")
+        const permiso = document.getElementById("permiso")
+        const pais = document.getElementById("pais")
+        const estado = formacionAcademica[index].estado;
+        const tarjeta = formacionAcademica[index].tarjeta;
+
+        if (estado == 'En curso') {
+
+            validacionEstudios(true)
+            opEstudio.checked = true
+
+        } else {
+            validacionEstudios(false)
+            opEstudio.checked = false
+        }
+
+
+        if (tarjeta == 'Si') {
+            opTarjeta1.checked = true;
+            validacionTarjeta(true)
+
+        } else {
+            opTarjeta1.checked = false;
+            validacionTarjeta(false)
+        }
+
+        formacionAcademica[index].cedula = persona.cedula;
+        nivelEsc.value = formacionAcademica[index].nivelEsc
+        universidad.value = formacionAcademica[index].universidad
+        titulo.value = formacionAcademica[index].titulo
+        fechaGraduacion.value = formacionAcademica[index].fechaGraduacion
+        numTarjeta.value = formacionAcademica[index].numTarjeta
+        seccional.value = formacionAcademica[index].seccional
+        expedicion.value = formacionAcademica[index].expedicion
+        convalidado.value = formacionAcademica[index].convalidado
+        permiso.value = formacionAcademica[index].permiso
+        pais.value = formacionAcademica[index].pais
+
+
+    }
+
+
+    const agregar = () => {
+
+        //limpiamos todo
+        limpiarForm()
+
+        //Se crea el boton para agregar registros
+        const buttonApply = `<button type="button" id="comprobar" class="btn btn-primary">Guardar Cambios</button>`
+        const bntAplicar = document.getElementById('bntAplicar')
+        bntAplicar.innerHTML = buttonApply;
+
+        // Fetch all the forms we want to apply custom Bootstrap validation styles to
+        var forms = document.querySelectorAll('.formFormacion')
+        var comprobar = document.getElementById('comprobar')
+        var status = document.getElementById("estadoForm")
+
+        // Loop over them and prevent submission
+        Array.prototype.slice.call(forms)
+            .forEach(function (form) {
+                comprobar.addEventListener('click', function (event) {
+                    status.innerHTML = '<span class="badge" style="background-color:#EFECE1; color:#333;">En progreso</span>'
+                    if (!form.checkValidity()) {
+                        event.preventDefault()
+                        event.stopPropagation()
+                        form.classList.add('was-validated')
+                    }
+                    else {
+                        event.preventDefault()
+                        datosPersonas()
+                        $('#exampleModal').modal('hide');
+                        //document.getElementById('formFormacion').reset();
+                        document.getElementById('formFormacion').noValidate = false;
+
+                    }
+                }, false)
+            })
+
+        //Si existen modificaciones genera una alerta
+        Array.prototype.slice.call(forms)
+            .forEach(function (form) {
+                form.addEventListener('change', function (event) {
+                    status.innerHTML = '<span class="badge" style="background-color:#EFECE1; color:#333;">En progreso</span>'
+
+                    //Modificamos la barra de progreso constantemente
+                    const valor = progreso()
+                    if (valor == 100) {
+                        status.innerHTML = '<span class="badge bg-success">Completo</span>'
+                    }
+                    barraProgreso(valor)
+
+                }, false)
+            })
+
+
+    }
+
+
+    const aplicarFormacion = () => {
+
+        const nivelEsc = document.getElementById("nivelEsc").value
+        const universidad = document.getElementById("universidad").value
+        const titulo = document.getElementById("titulo").value
+        const opEstudio = document.getElementById("opEstudio").checked
+        const fechaGraduacion = document.getElementById("fechaGraduacion").value
+        const numTarjeta = document.getElementById("numTarjeta").value
+        const seccional = document.getElementById("seccional").value
+        const expedicion = document.getElementById("expedicion").value
+        const convalidado = document.getElementById("convalidado").value
+        const permiso = document.getElementById("permiso").value
+        const pais = document.getElementById("pais").value
+        const opTarjeta1 = document.getElementById("switchCheck").checked
+        var opEstudio1 = opEstudio ? "En curso" : "Finalizado";
+        var opTarjeta = opTarjeta1 ? "Si" : "No";
+
+        if (formacionAcademica.length > 0) {
+
+            // Guardar valores VIEJOS para borrar del Sheet
+            var oldItem = formacionAcademica[indice];
+            var oldNivelEsc = oldItem.nivelEsc;
+            var oldTitulo = oldItem.titulo;
+
+            // Actualizar el array local
+            formacionAcademica[indice].cedula = persona.cedula
+            formacionAcademica[indice].nivelEsc = nivelEsc
+            formacionAcademica[indice].universidad = universidad
+            formacionAcademica[indice].titulo = titulo
+            formacionAcademica[indice].estado = opEstudio1
+            formacionAcademica[indice].fechaGraduacion = fechaGraduacion
+            formacionAcademica[indice].adjunto = ruta || oldItem.adjunto
+            formacionAcademica[indice].tarjeta = opTarjeta
+            formacionAcademica[indice].numTarjeta = numTarjeta
+            formacionAcademica[indice].seccional = seccional
+            formacionAcademica[indice].expedicion = expedicion
+            formacionAcademica[indice].convalidado = convalidado
+            formacionAcademica[indice].permiso = permiso
+            formacionAcademica[indice].pais = pais
+
+            // 1. Borrar la fila vieja del Sheet
+            google.script.run
+                .withSuccessHandler(function () { console.log('\u2705 Fila vieja eliminada') })
+                .withFailureHandler(function (error) { console.error('\u274c Error:', error) })
+                .eliminarFormacionRow(persona.cedula, oldNivelEsc, oldTitulo);
+
+            // Mover al final del array
+            var editedItem = formacionAcademica.splice(indice, 1)[0];
+            formacionAcademica.push(editedItem);
+
+            // 2. Agregar fila actualizada
+            var updatedRow = Object.values(editedItem)
+            google.script.run
+                .withSuccessHandler(function () {
+                    console.log('\u2705 Formaci\u00f3n editada guardada')
+                    var toastMsn = {
+                        bg: "bg-success",
+                        title: "Editado",
+                        msn: "Cambios guardados en la base de datos",
+                        icon: "fas fa-check"
+                    }
+                    alertaMsn(toastMsn)
+                    var status = document.getElementById("estadoForm")
+                    status.innerHTML = '<span class="badge bg-success text-white">Guardado</span>'
+                })
+                .withFailureHandler(function (error) {
+                    console.error('\u274c Error guardando edici\u00f3n:', error)
+                })
+                .appendFormacionRow(updatedRow);
+
+            $('#exampleModal').modal('hide');
+            document.getElementById('formFormacion').reset();
+            tablaVinculados()
+        }
+    }
+
+
+
+    //Esta funcion carga los archivos seleccionados (sin botón Cargar)
+    const arrayObjetos = (f) => {
+        var objeto = f[0];
+        var file = objeto.files[0];
+        console.log('archivo seleccionado: ' + file.name)
+        archivos = [file];
+    }
+
+    //Genera una alerta de error
+    const alertaMsn = (toastMsn) => {
+
+
+
+        var option = {
+            animation: true,
+            delay: 2000,
+        }
+
+        var toastBody =
+            `<div class="toast-container position-fixed bottom-0 end-0 p-3">
+
+            <div class="toast text-dark" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header ${toastMsn.bg}" style="${toastMsn.bgStyle || ''}" >
+                    <i class="${toastMsn.icon} rounded me-2"></i>
+                    <strong class="me-auto">${toastMsn.title}</strong>
+                    <small class="text-dark">Ahora</small>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body ${toastMsn.bg}" style="${toastMsn.bgStyle || ''}">
+                ${toastMsn.msn}
+                </div>
+            </div>
+        </div>`
+
+        const noti = document.getElementById('notificaciones').innerHTML = toastBody
+
+        var toastElList = [].slice.call(document.querySelectorAll('.toast'))
+        var toastList = toastElList.map(function (toastEl) {
+            return new bootstrap.Toast(toastEl, option)
+        })
+
+        toastList.map(function (toast) {
+            toast.show()
+        })
+    }
+
+
+
+
+
+</script>

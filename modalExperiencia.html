@@ -1,0 +1,223 @@
+<!-- Modal -->
+<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Experiencia Laboral</h5>
+                <div id="estadoForm" class="mb-1 ms-2"></div>
+
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+
+                <!-- Alerta de dedicación excedida (oculta por defecto) -->
+                <div id="alertaDedicacion" style="display:none;"></div>
+
+                <!-- Formulario Experiencia -->
+                <form class="row g-3 needs-validation formExperiencia " id="formExperiencia" novalidate>
+
+
+                    <div class="col-md-12 mt-4"></div>
+
+                    <!--Empresa-->
+                    <div class="col-md-4">
+                        <label for="empresa" class="form-label">Empresa</label>
+                        <input type="text" class="form-control" id="empresa" required>
+                        <div id="validationServerUsernameFeedback" class="invalid-feedback">
+                            Por favor diligencie este campo.
+                        </div>
+                    </div>
+                    <!--Close Empresa-->
+
+                    <!--Cargo-->
+                    <div class="col-md-4">
+                        <label for="cargo" class="form-label">Cargo Desempeñado</label>
+                        <input type="text" class="form-control" id="cargo" required>
+                        <div id="validationServerUsernameFeedback" class="invalid-feedback">
+                            Por favor diligencie este campo.
+                        </div>
+                    </div>
+                    <!--Close Cargo-->
+
+                    <!--Fecha Inicio-->
+                    <div class="col-md-2">
+                        <label for="fechaIn" class="form-label">Fecha Inicio</label>
+
+                        <input type="date" class="form-control" id="fechaIn" required>
+                        <div id="validationServerUsernameFeedback" class="invalid-feedback">
+                            Por favor diligencie este campo.
+                        </div>
+                    </div>
+
+                    <!--Close Fecha Inicio-->
+
+                    <!--Fecha Final-->
+                    <div class="col-md-2">
+                        <label for="fechaFin" class="form-label">Fecha Final</label>
+                        <input type="date" class="form-control" id="fechaFin" required>
+                        <div id="validationServerUsernameFeedback" class="invalid-feedback">
+                            Por favor diligencie este campo.
+                        </div>
+                    </div>
+                    <!--Close Fecha Final-->
+
+                    <!--Objeto-->
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="objeto" class="form-label">Objeto de contrato</label>
+                            <textarea class="form-control" id="objeto" rows="3" required></textarea>
+                            <div id="validationServerUsernameFeedback" class="invalid-feedback">
+                                Por favor diligencie este campo.
+                            </div>
+                        </div>
+
+                    </div>
+                    <!--Close Objeto-->
+
+                    <!--Funciones Realizadas-->
+                    <div class="col-md-6">
+
+                        <div class="mb-3">
+                            <label for="funciones" class="form-label">Funciones Realizadas</label>
+                            <textarea class="form-control" id="funciones" rows="3" required></textarea>
+                            <div id="validationServerUsernameFeedback" class="invalid-feedback">
+                                Por favor diligencie este campo.
+                            </div>
+                        </div>
+
+
+                    </div>
+                    <!--Close Funciones Realizadas-->
+
+                    <!-- sectorr (oculto - se mantiene para compatibilidad con la BD) -->
+                    <input type="hidden" id="sectorr" value="">
+
+                    <!-- Clasificación de Proyecto -->
+                    <div class="col-md-6">
+
+                        <div class="mb-4">
+                            <label for="clasificacionn" class="form-label">Clasificación de proyecto</label>
+                            <select type="text" class="form-select" id="clasificacionn" required>
+                                <option selected disabled value=""></option>
+                                <option>Estudios y Diseños</option>
+                                <option>Interventoría</option>
+                                <option>Construcción</option>
+                                <option>Mantenimiento y Operación</option>
+                                <option>Modernización y Repotenciación</option>
+                                <option>Consultoría y Asesoría</option>
+                                <option>Gerencia de Proyectos</option>
+                                <option>Seguridad y Salud (SST)</option>
+                                <option>Gestión Ambiental y Social</option>
+                                <option>Topografía y Geotecnia</option>
+                                <option>Logística y Suministros</option>
+                                <option>Puesta en Marcha</option>
+                                <option>Estructuración</option>
+                            </select>
+                            <div id="validationServerUsernameFeedback" class="invalid-feedback">
+                                Por favor diligencie este campo.
+                            </div>
+                        </div>
+
+                    </div>
+                    <!--Close Clasificación de Proyecto-->
+
+                    <!-- Tipo de Proyecto -->
+                    <div class="col-md-6">
+
+                        <div class="mb-4">
+                            <label for="tipoproy" class="form-label">Tipo de proyecto</label>
+                            <select type="text" class="form-select" id="tipoproy" required>
+                                <option selected disabled value=""></option>
+                                <option>Centrales Hidroeléctricas</option>
+                                <option>Vías Convencionales</option>
+                                <option>Sistemas Ferroviarios y Masivos</option>
+                                <option>Subestaciones y Redes Eléctricas</option>
+                                <option>Plantas de Tratamiento</option>
+                                <option>Acueducto y Alcantarillado</option>
+                                <option>Obras Hidráulicas y de Control</option>
+                                <option>Puentes y Viaductos</option>
+                                <option>Túneles y Obras Subterráneas</option>
+                                <option>Estructuras de Contención</option>
+                                <option>Cimentaciones Profundas</option>
+                                <option>Edificaciones</option>
+                                <option>Infraestructura Industrial</option>
+                                <option>Parques Solares y Eólicos</option>
+                                <option>Distritos de Riego y Drenaje</option>
+                                <option>Oil & Gas</option>
+                                <option>Obras de Urbanismo</option>
+                                <option>Obras Marítimas y Fluviales</option>
+                                <option>Obras Aeroportuarias</option>
+                                <option>Minería</option>
+                                <option>Infraestructura de Residuos Sólidos</option>
+                                <option>Redes Secas</option>
+                                <option>Telecomunicaciones</option>
+                                <option>Restauración y Patrimonio</option>
+                            </select>
+
+                            <div id="validationServerUsernameFeedback" class="invalid-feedback">
+                                Por favor diligencie este campo.
+                            </div>
+                        </div>
+
+                    </div>
+                    <!--Close Tipo de Proyecto-->
+                    <!-- clasificacion Realizadas-->
+                    <div class="col-md-12">
+
+                        <div class="mb-12">
+                            <label for="dedicacion" class="form-label">Porcentaje de dedicación</label>
+                            <select type="text" class="form-select" id="dedicacion" required>
+                                <option selected disabled value="">Seleccione...</option>
+                                <option value="0.1">10%</option>
+                                <option value="0.2">20%</option>
+                                <option value="0.3">30%</option>
+                                <option value="0.4">40%</option>
+                                <option value="0.5">50%</option>
+                                <option value="0.6">60%</option>
+                                <option value="0.7">70%</option>
+                                <option value="0.8">80%</option>
+                                <option value="0.9">90%</option>
+                                <option value="1">100%</option>
+                            </select>
+                            <div id="validationServerUsernameFeedback" class="invalid-feedback">
+                                Por favor diligencie este campo.
+                            </div>
+                        </div>
+
+
+                    </div>
+                    <!--Close  Realizadas-->
+
+
+
+                    <!--Adjuntar Documentos-->
+                    <div class="col-md-12">
+                        <label for="formFile" class="form-label">Adjuntar Documentos</label>
+                        <input class="form-control " type="file" id="formFile" onchange="arrayObjetos([this])">
+
+                        <!--Barra de progreso-->
+                        <div style="display:none;" class="progress mt-2" id="progress">
+                            <div id="barra" class="progress-bar progress-bar-striped progress-bar-animated"
+                                role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"
+                                style="width: 100%"></div>
+
+                        </div>
+                        <div id="divCargar">
+
+
+
+                </form>
+
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+
+                <div id="bntAplicar">
+                    <!--<button type="button" id="comprobar" class="btn btn-primary">Guardar Cambios</button>-->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!--Close Modal-->

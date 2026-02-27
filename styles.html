@@ -1,0 +1,809 @@
+<style>
+  /*************************************/
+  /*****  DATATALENTO — App CSS    *****/
+  /*************************************/
+
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --dt-primary: #C17B50;
+    --dt-primary-light: #D4956A;
+    --dt-primary-dark: #A3623C;
+    --dt-dark: #1A1D23;
+    --dt-dark-card: #22262E;
+    --dt-dark-sidebar: #171A1F;
+    --dt-dark-hover: #2A2F38;
+    --dt-border: #333842;
+    --dt-text: #E8E9EC;
+    --dt-text-muted: #8B919A;
+    --dt-text-heading: #FFFFFF;
+    --dt-success: #2ECC71;
+    --dt-danger: #E74C3C;
+    --dt-warning: #F39C12;
+    --dt-info: #3498DB;
+    --dt-glass: rgba(34, 38, 46, 0.88);
+    --dt-glass-border: rgba(255, 255, 255, 0.08);
+    --dt-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    --dt-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+    --dt-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --dt-font: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: var(--dt-font);
+    background: var(--dt-dark);
+    color: var(--dt-text);
+    margin: 0;
+    min-height: 100vh;
+  }
+
+  /* ============================= */
+  /*         SCROLLBAR             */
+  /* ============================= */
+
+  /* Forzar scrollbar siempre visible */
+  body {
+    overflow-y: scroll;
+  }
+
+  /* Aplicar a TODOS los elementos scrollables */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--dt-dark);
+    border-radius: 5px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(139, 145, 154, 0.5);
+    border-radius: 5px;
+    border: 2px solid var(--dt-dark);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--dt-text-muted);
+  }
+
+  /* Para Firefox */
+  * {
+    scrollbar-width: auto;
+    scrollbar-color: rgba(139, 145, 154, 0.5) var(--dt-dark);
+  }
+
+  /* ============================= */
+  /*         NAVBAR                */
+  /* ============================= */
+  .navbar {
+    background: var(--dt-dark-sidebar) !important;
+    border-bottom: 1px solid var(--dt-border);
+    padding: 0.6rem 1.2rem !important;
+    box-shadow: var(--dt-shadow-sm);
+  }
+
+  .navbar-brand,
+  .navbar .h1 {
+    font-weight: 700 !important;
+    letter-spacing: 4px !important;
+    color: var(--dt-primary) !important;
+    font-size: 1.1rem !important;
+  }
+
+  .navbar-toggler {
+    border-color: var(--dt-border) !important;
+    padding: 4px 8px !important;
+  }
+
+  .navbar-toggler-icon {
+    filter: invert(0.7);
+  }
+
+  /* ============================= */
+  /*       SIDEBAR OFFCANVAS       */
+  /* ============================= */
+  .offcanvas {
+    background: linear-gradient(180deg, var(--dt-dark-sidebar) 0%, #12141A 100%) !important;
+    border-right: 1px solid var(--dt-border) !important;
+    width: 280px !important;
+  }
+
+  .offcanvas-header {
+    padding: 1.2rem 1.5rem !important;
+    border-bottom: 1px solid var(--dt-glass-border);
+  }
+
+  .offcanvas-title {
+    font-weight: 700 !important;
+    letter-spacing: 4px !important;
+    color: var(--dt-primary) !important;
+    font-size: 1rem !important;
+  }
+
+  .offcanvas .btn-close {
+    filter: invert(0.6) !important;
+    background-color: transparent !important;
+    opacity: 0.6;
+    transition: var(--dt-transition);
+  }
+
+  .offcanvas .btn-close:hover {
+    opacity: 1;
+  }
+
+  /* Navigation links in sidebar */
+  .offcanvas .nav-link,
+  .offcanvas button.nav-link {
+    color: var(--dt-text-muted) !important;
+    font-size: 0.88rem;
+    font-weight: 400;
+    padding: 0.65rem 0.8rem !important;
+    border-radius: 8px;
+    margin-bottom: 2px;
+    transition: var(--dt-transition);
+    border: none;
+    background: transparent;
+    text-align: left;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .offcanvas .nav-link:hover,
+  .offcanvas button.nav-link:hover {
+    color: var(--dt-text) !important;
+    background: var(--dt-dark-hover) !important;
+    text-decoration: none !important;
+  }
+
+  .offcanvas .nav-link i,
+  .offcanvas button.nav-link i {
+    width: 20px;
+    text-align: center;
+    font-size: 0.9rem;
+    opacity: 0.7;
+    transition: var(--dt-transition);
+  }
+
+  .offcanvas .nav-link:hover i,
+  .offcanvas button.nav-link:hover i {
+    color: var(--dt-primary);
+    opacity: 1;
+  }
+
+  /* Active nav link */
+  .offcanvas .nav-link.text-info,
+  .offcanvas button.nav-link.text-info {
+    color: var(--dt-text-heading) !important;
+    background: rgba(193, 123, 80, 0.12) !important;
+    font-weight: 600;
+    border-left: 3px solid var(--dt-primary);
+    padding-left: calc(0.8rem - 3px) !important;
+  }
+
+  .offcanvas .nav-link.text-info i,
+  .offcanvas button.nav-link.text-info i {
+    color: var(--dt-primary);
+    opacity: 1;
+  }
+
+  /* Cerrar sesión button */
+  .offcanvas .btn-outline-danger,
+  .offcanvas button[value="index"] {
+    color: var(--dt-danger) !important;
+    border: 1px solid rgba(231, 76, 60, 0.3) !important;
+    background: transparent !important;
+    margin-top: 1rem;
+    border-radius: 8px !important;
+    font-size: 0.85rem;
+    transition: var(--dt-transition);
+  }
+
+  .offcanvas .btn-outline-danger:hover,
+  .offcanvas button[value="index"]:hover {
+    background: rgba(231, 76, 60, 0.1) !important;
+    border-color: var(--dt-danger) !important;
+  }
+
+  /* ============================= */
+  /*       MAIN CONTENT AREA       */
+  /* ============================= */
+  .container,
+  .container-fluid {
+    color: var(--dt-text);
+  }
+
+  /* Page titles */
+  h3,
+  h4,
+  h5,
+  h6 {
+    color: var(--dt-text-heading);
+    font-weight: 600;
+  }
+
+  /* Section headers */
+  .row>h5,
+  .container>h5 {
+    font-size: 1.1rem;
+    padding-bottom: 0.6rem;
+    margin-bottom: 1.2rem;
+    border-bottom: 2px solid var(--dt-primary);
+    display: inline-block;
+  }
+
+  /* ============================= */
+  /*         FORMS                 */
+  /* ============================= */
+  .form-label {
+    color: var(--dt-text-muted);
+    font-size: 0.82rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.35rem;
+  }
+
+  .form-control,
+  .form-select {
+    background-color: var(--dt-dark-card) !important;
+    border: 1px solid var(--dt-border) !important;
+    color: var(--dt-text) !important;
+    border-radius: 8px !important;
+    padding: 0.55rem 0.85rem !important;
+    font-size: 0.9rem;
+    transition: var(--dt-transition);
+  }
+
+  .form-control:focus,
+  .form-select:focus {
+    border-color: var(--dt-primary) !important;
+    box-shadow: 0 0 0 3px rgba(193, 123, 80, 0.15) !important;
+    outline: none !important;
+  }
+
+  .form-control::placeholder {
+    color: var(--dt-text-muted) !important;
+  }
+
+  .form-control:disabled,
+  .form-select:disabled {
+    background-color: rgba(26, 29, 35, 0.6) !important;
+    opacity: 0.6;
+  }
+
+  /* Switch / Checkbox */
+  .form-check-input {
+    background-color: var(--dt-dark-hover) !important;
+    border-color: var(--dt-border) !important;
+  }
+
+  .form-check-input:checked {
+    background-color: var(--dt-primary) !important;
+    border-color: var(--dt-primary) !important;
+  }
+
+  .form-check-label {
+    color: var(--dt-text);
+    font-size: 0.88rem;
+  }
+
+  /* File input */
+  .form-control[type="file"] {
+    padding: 0.4rem 0.85rem !important;
+  }
+
+  /* ============================= */
+  /*         BUTTONS               */
+  /* ============================= */
+  .btn-primary {
+    background: linear-gradient(135deg, var(--dt-primary), var(--dt-primary-dark)) !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-weight: 500;
+    font-size: 0.88rem;
+    padding: 0.5rem 1.2rem !important;
+    transition: var(--dt-transition);
+    color: #fff !important;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(193, 123, 80, 0.3) !important;
+  }
+
+  .btn-primary:active {
+    transform: translateY(0);
+  }
+
+  .btn-success {
+    background: var(--dt-success) !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-weight: 500;
+    transition: var(--dt-transition);
+  }
+
+  .btn-success:hover {
+    background: #27ae60 !important;
+    transform: translateY(-1px);
+  }
+
+  .btn-danger {
+    background: transparent !important;
+    border: 1px solid var(--dt-danger) !important;
+    color: var(--dt-danger) !important;
+    border-radius: 8px !important;
+    font-weight: 500;
+    transition: var(--dt-transition);
+  }
+
+  .btn-danger:hover {
+    background: rgba(231, 76, 60, 0.15) !important;
+  }
+
+  .btn-dark {
+    background: var(--dt-dark-hover) !important;
+    border: 1px solid var(--dt-border) !important;
+    color: var(--dt-text) !important;
+    border-radius: 8px !important;
+    transition: var(--dt-transition);
+  }
+
+  .btn-dark:hover {
+    background: var(--dt-border) !important;
+  }
+
+  .btn-outline-primary {
+    color: var(--dt-primary) !important;
+    border-color: var(--dt-primary) !important;
+    background: transparent !important;
+    border-radius: 8px !important;
+    transition: var(--dt-transition);
+  }
+
+  .btn-outline-primary:hover {
+    background: rgba(193, 123, 80, 0.12) !important;
+    color: var(--dt-primary-light) !important;
+  }
+
+  /* Remove focus shadows globally */
+  .btn:focus,
+  .btncheck:focus {
+    box-shadow: none !important;
+  }
+
+  .btn-circle {
+    border-radius: 50% !important;
+    width: 36px;
+    height: 36px;
+    padding: 0 !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ============================= */
+  /*         TABLES                */
+  /* ============================= */
+  .table {
+    color: var(--dt-text) !important;
+    border-color: var(--dt-border) !important;
+    font-size: 0.88rem;
+  }
+
+  .table thead th {
+    background: var(--dt-dark-sidebar) !important;
+    color: var(--dt-text-muted) !important;
+    font-weight: 600;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid var(--dt-primary) !important;
+    padding: 0.7rem 0.6rem !important;
+  }
+
+  .table tbody td {
+    padding: 0.6rem !important;
+    border-color: var(--dt-border) !important;
+    vertical-align: middle;
+  }
+
+  .table tbody tr {
+    transition: var(--dt-transition);
+  }
+
+  .table tbody tr:hover {
+    background: var(--dt-dark-hover) !important;
+  }
+
+  .table-striped>tbody>tr:nth-of-type(odd)>* {
+    background-color: rgba(255, 255, 255, 0.02) !important;
+    color: var(--dt-text) !important;
+  }
+
+  /* ============================= */
+  /*         MODALS                */
+  /* ============================= */
+  .modal-content {
+    background: var(--dt-dark-card) !important;
+    border: 1px solid var(--dt-border) !important;
+    border-radius: 12px !important;
+    box-shadow: var(--dt-shadow) !important;
+    color: var(--dt-text);
+  }
+
+  .modal-header {
+    border-bottom: 1px solid var(--dt-glass-border) !important;
+    padding: 1.2rem 1.5rem !important;
+  }
+
+  .modal-title {
+    font-weight: 600;
+    color: var(--dt-text-heading);
+  }
+
+  .modal-body {
+    padding: 1.5rem !important;
+  }
+
+  .modal-footer {
+    border-top: 1px solid var(--dt-glass-border) !important;
+    padding: 1rem 1.5rem !important;
+  }
+
+  .modal .btn-close {
+    filter: invert(0.6);
+  }
+
+  /* ============================= */
+  /*         CARDS                 */
+  /* ============================= */
+  .card {
+    background: var(--dt-dark-card) !important;
+    border: 1px solid var(--dt-border) !important;
+    border-radius: 12px !important;
+    box-shadow: var(--dt-shadow-sm);
+  }
+
+  .card-header {
+    background: rgba(0, 0, 0, 0.2) !important;
+    border-bottom: 1px solid var(--dt-glass-border) !important;
+    font-weight: 600;
+  }
+
+  .card-body {
+    color: var(--dt-text);
+  }
+
+  /* ============================= */
+  /*         ALERTS                */
+  /* ============================= */
+  .alert-success {
+    background: rgba(46, 204, 113, 0.12) !important;
+    border-color: rgba(46, 204, 113, 0.3) !important;
+    color: var(--dt-success) !important;
+    border-radius: 8px !important;
+  }
+
+  .alert-danger {
+    background: rgba(231, 76, 60, 0.12) !important;
+    border-color: rgba(231, 76, 60, 0.3) !important;
+    color: var(--dt-danger) !important;
+    border-radius: 8px !important;
+  }
+
+  /* ============================= */
+  /*   BACK TO TOP BUTTON          */
+  /* ============================= */
+  #btn-back-to-top {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    display: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 50% !important;
+    background: var(--dt-primary) !important;
+    color: #fff !important;
+    border: none !important;
+    box-shadow: 0 4px 16px rgba(193, 123, 80, 0.3);
+    transition: var(--dt-transition);
+    z-index: 1000;
+  }
+
+  #btn-back-to-top:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 24px rgba(193, 123, 80, 0.45);
+  }
+
+  /* ============================= */
+  /*    STICKY SIDEBAR CONTENT     */
+  /* ============================= */
+  .fixed-content {
+    margin-top: 10px;
+    position: -webkit-sticky;
+    position: sticky;
+    top: 0px;
+  }
+
+  /* ============================= */
+  /*    HOME PAGE                  */
+  /* ============================= */
+  .iniciobody {
+    background: linear-gradient(135deg, var(--dt-dark) 0%, #252830 100%);
+    min-height: 100vh;
+  }
+
+  .btnComenzar {
+    background: linear-gradient(135deg, var(--dt-primary), var(--dt-primary-dark)) !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 10px !important;
+    font-size: 1.2rem;
+    font-weight: 600;
+    letter-spacing: 2px;
+    padding: 0.8rem 2.5rem !important;
+    transition: var(--dt-transition);
+    text-transform: uppercase;
+  }
+
+  .btnComenzar:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(193, 123, 80, 0.35);
+  }
+
+  /* ============================= */
+  /*    NAV LINKS (legacy)         */
+  /* ============================= */
+  .navlinks {
+    transition: var(--dt-transition);
+  }
+
+  .navlinks:hover {
+    color: var(--dt-primary) !important;
+    text-decoration: none !important;
+    font-weight: 500;
+  }
+
+  /* ============================= */
+  /*    SPINNER / LOADING          */
+  /* ============================= */
+  .spinner-border {
+    color: var(--dt-primary) !important;
+  }
+
+  /* ============================= */
+  /*    RESPONSIVE                 */
+  /* ============================= */
+  @media (max-width: 768px) {
+    .offcanvas {
+      width: 260px !important;
+    }
+
+    h5 {
+      font-size: 1rem;
+    }
+
+    .form-label {
+      font-size: 0.78rem;
+    }
+
+    /* Reduce side margins on mobile */
+    .mx-4 {
+      margin-left: 0.75rem !important;
+      margin-right: 0.75rem !important;
+    }
+
+    .py-4 {
+      padding-top: 1rem !important;
+      padding-bottom: 1rem !important;
+    }
+
+    /* ★ FIX 1: Remove sticky header on mobile — description scrolls away */
+    .fixed-content {
+      position: static !important;
+      padding: 0.5rem 0;
+    }
+
+    /* Description text smaller on mobile */
+    .fixed-content p {
+      font-size: 0.82rem;
+      line-height: 1.4;
+      margin-bottom: 0.5rem;
+    }
+
+    /* Tables: horizontal scroll on mobile */
+    #tablaEspecialidad,
+    #tablaPersonas,
+    .table-responsive,
+    [id*="tabla"] {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    #tablaEspecialidad .table,
+    #tablaPersonas .table,
+    .table {
+      min-width: 600px;
+    }
+
+    /* Buttons: larger touch targets */
+    .btn {
+      min-height: 44px;
+      font-size: 0.9rem;
+    }
+
+    /* ★ FIX 2: Select dropdowns — fix text visibility on mobile Android */
+    .form-control,
+    .form-select {
+      min-height: 44px;
+      font-size: 1rem !important;
+    }
+
+    /* Force select option text to be visible on native mobile dropdowns */
+    .form-select option {
+      background-color: #fff !important;
+      color: #1a1d23 !important;
+    }
+
+    select option {
+      background-color: #fff !important;
+      color: #1a1d23 !important;
+    }
+
+    /* Ensure selected text shows inside the select */
+    .form-select {
+      color: var(--dt-text) !important;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    /* Page title */
+    h4 {
+      font-size: 1.1rem;
+    }
+
+    /* Modal: full width on mobile */
+    .modal-dialog {
+      margin: 0.5rem;
+    }
+
+    /* Toast notifications: full width on mobile */
+    .toast-container {
+      left: 0.5rem !important;
+      right: 0.5rem !important;
+    }
+
+    /* ★ FIX 3: Hamburger button — keep compact, don't stretch */
+    [data-bs-toggle="offcanvas"] {
+      width: auto !important;
+      min-width: 44px;
+      min-height: 44px;
+    }
+
+    /* Home page adjustments */
+    .btnComenzar {
+      font-size: 1rem;
+      padding: 0.7rem 2rem !important;
+    }
+  }
+
+  /* Extra small screens (phones in portrait) */
+  @media (max-width: 480px) {
+    h4 {
+      font-size: 1rem;
+    }
+
+    .mx-4 {
+      margin-left: 0.5rem !important;
+      margin-right: 0.5rem !important;
+    }
+
+    /* Full-width buttons — EXCEPT the hamburger menu button */
+    .btn-primary:not([data-bs-toggle="offcanvas"]),
+    .btn-success,
+    .btn-danger {
+      width: 100%;
+    }
+
+    /* Stack col-sm-2 label + col-sm-1 input vertically */
+    .col-sm-2,
+    .col-sm-1 {
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+  }
+
+  /* ============================= */
+  /*    ACCORDION (if used)        */
+  /* ============================= */
+  .accordion-item {
+    background: var(--dt-dark-card) !important;
+    border-color: var(--dt-border) !important;
+  }
+
+  .accordion-button {
+    background: var(--dt-dark-card) !important;
+    color: var(--dt-text) !important;
+    font-weight: 500;
+  }
+
+  .accordion-button:not(.collapsed) {
+    background: var(--dt-dark-hover) !important;
+    color: var(--dt-primary) !important;
+  }
+
+  .accordion-button::after {
+    filter: invert(0.5);
+  }
+
+  /* ============================= */
+  /*   OVERRIDES FOR DARK THEME    */
+  /* ============================= */
+
+  /* Progress bar area uses bg-white — override for dark theme */
+  .fixed-content.bg-white,
+  .bg-white {
+    background-color: var(--dt-dark-card) !important;
+    color: var(--dt-text);
+  }
+
+  /* Progress bar */
+  .progress {
+    background-color: var(--dt-dark) !important;
+    border-radius: 6px !important;
+    height: 8px;
+  }
+
+  .progress-bar {
+    background: linear-gradient(135deg, var(--dt-primary), var(--dt-primary-dark)) !important;
+    border-radius: 6px !important;
+    font-size: 0.7rem;
+  }
+
+  /* Form helper text */
+  .form-text {
+    color: var(--dt-text-muted) !important;
+    font-size: 0.78rem;
+  }
+
+  /* Dropdown menus */
+  .dropdown-menu {
+    background-color: var(--dt-dark-card) !important;
+    border: 1px solid var(--dt-border) !important;
+    border-radius: 8px !important;
+  }
+
+  .dropdown-item {
+    color: var(--dt-text) !important;
+    transition: var(--dt-transition);
+  }
+
+  .dropdown-item:hover {
+    background-color: var(--dt-dark-hover) !important;
+    color: var(--dt-text-heading) !important;
+  }
+
+  /* Horizontal rules */
+  hr {
+    border-color: var(--dt-border) !important;
+    opacity: 0.5;
+  }
+
+  /* Paragraph text in forms */
+  p {
+    color: var(--dt-text-muted);
+  }
+
+  /* Col form label */
+  .col-form-label {
+    color: var(--dt-text-muted);
+  }
+</style>

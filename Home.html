@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <!-- Required meta tags -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <base target="_top">
+  <title>DATATALENTO</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+
+  <!-- FontAwesome CDN -->
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.3/css/all.css"
+    integrity="sha384-SZXxX4whJ79/gErwcOYf+zWLeJdY/qpuqC4cAa9rOGUstPomtqpuNWT9wdPEn2fk" crossorigin="anonymous">
+
+</head>
+
+<body
+  style="background: linear-gradient(135deg, #1A1D23 0%, #252830 50%, #1A1D23 100%); min-height: 100vh; font-family: 'Inter', sans-serif; margin: 0;">
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-dark"
+    style="background: #171A1F !important; border-bottom: 1px solid #333842; padding: 0.6rem 1.2rem;">
+    <div class="container-fluid">
+      <span class="navbar-brand mb-0 h1"
+        style="font-weight: 700; letter-spacing: 4px; color: #C17B50; font-size: 1.1rem;">DATATALENTO</span>
+    </div>
+  </nav>
+
+  <!-- Welcome Content -->
+  <div class="d-flex flex-column align-items-center justify-content-center"
+    style="min-height: calc(100vh - 56px); padding: 2rem;">
+
+    <!-- Decorative icon -->
+    <div
+      style="width: 100px; height: 100px; border-radius: 50%; background: rgba(193, 123, 80, 0.1); display: flex; align-items: center; justify-content: center; margin-bottom: 2rem; border: 2px solid rgba(193, 123, 80, 0.2);">
+      <i class="fas fa-users" style="font-size: 2.5rem; color: #C17B50;"></i>
+    </div>
+
+    <h2 style="color: #FFFFFF; font-weight: 700; letter-spacing: 3px; margin-bottom: 0.5rem; text-align: center;">
+      BIENVENIDO</h2>
+    <p style="color: #8B919A; font-size: 1rem; margin-bottom: 2.5rem; text-align: center; max-width: 500px;">
+      Gestión integral de hojas de vida y talento humano. Completa tu perfil para continuar.
+    </p>
+
+    <!-- COMENZAR button — preserved as POST form -->
+    <form action="<?= rutaWeb ?>" method="post">
+      <button name="btnLogin" type="submit" value="registro" class="btn btnComenzar"
+        style="background: linear-gradient(135deg, #C17B50, #A3623C); color: #fff; border: none; border-radius: 10px; font-size: 1.1rem; font-weight: 600; letter-spacing: 2px; padding: 0.8rem 3rem; text-transform: uppercase; transition: all 0.3s ease;">
+        COMENZAR
+      </button>
+    </form>
+
+    <!-- Stats row -->
+    <div class="d-flex gap-5 mt-5" style="opacity: 0.6;">
+      <div class="text-center">
+        <i class="fas fa-id-card" style="color: #C17B50; font-size: 1.3rem;"></i>
+        <p style="color: #8B919A; font-size: 0.75rem; margin: 0.5rem 0 0 0;">Perfil</p>
+      </div>
+      <div class="text-center">
+        <i class="fas fa-graduation-cap" style="color: #C17B50; font-size: 1.3rem;"></i>
+        <p style="color: #8B919A; font-size: 0.75rem; margin: 0.5rem 0 0 0;">Formación</p>
+      </div>
+      <div class="text-center">
+        <i class="fas fa-briefcase" style="color: #C17B50; font-size: 1.3rem;"></i>
+        <p style="color: #8B919A; font-size: 0.75rem; margin: 0.5rem 0 0 0;">Experiencia</p>
+      </div>
+      <div class="text-center">
+        <i class="fas fa-file-alt" style="color: #C17B50; font-size: 1.3rem;"></i>
+        <p style="color: #8B919A; font-size: 0.75rem; margin: 0.5rem 0 0 0;">Reportes</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Politicas (preserved from original) -->
+  <div class="modal fade" id="miModal" tabindex="-1" aria-labelledby="miModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content"
+        style="background: #22262E; border: 1px solid #333842; border-radius: 12px; color: #E8E9EC;">
+        <div class="modal-header" style="border-bottom: 1px solid rgba(255,255,255,0.08);">
+          <h5 class="modal-title" id="miModalLabel" style="font-weight: 600;">Tratamiento de datos</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+            style="filter: invert(0.6);"></button>
+        </div>
+        <div class="modal-body">
+          <p style="font-size: 0.9rem; line-height: 1.7; color: #C8CBD0; text-align: justify;">La información
+            suministrada para el registro y actualización de la herramienta DATATALENTO con el propósito de revisar,
+            diseñar e implementar estrategias para la gestión del personal, se acoge a lo dispuesto en la ley 1581 de
+            2012 y la <a
+              href="https://static1.squarespace.com/static/5eb40c561e1add20751f76ef/t/63bf05ed8d7f1067713715b9/1673463292835/AK-JUR-01+MANUAL+TTO+Y+PROT+DATOS+%281%29.pdf"
+              target="_blank" style="color: #5DADE2; text-decoration: underline;">política de protección y tratamiento
+              de datos personales de SEDIC S.A.</a> Al continuar usted acepta conocer dicha política y autoriza a SEDIC
+            S.A., SEDIC CONSULTING S.A.S. y SEDIC SERVICIOS S.A.S para tratar sus datos.</p>
+        </div>
+        <div class="modal-footer" style="border-top: 1px solid rgba(255,255,255,0.08);">
+          <button type="button" class="btn" data-bs-dismiss="modal"
+            style="background: transparent; border: 1px solid #E74C3C; color: #E74C3C; border-radius: 8px;">Cerrar</button>
+          <button type="button" class="btn" id="aceptar" data-bs-dismiss="modal" onclick="aceptar()"
+            style="background: linear-gradient(135deg, #C17B50, #A3623C); color: #fff; border: none; border-radius: 8px; font-weight: 500;">Aceptar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Jquery -->
+  <script src="https://code.jquery.com/jquery-2.2.4.min.js"
+    integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <!-- Bootstrap Bundle with Popper -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+    crossorigin="anonymous"></script>
+
+  <?!= include("scriptHome");?>
+  <?!= include("styles");?>
+
+</body>
+
+</html>

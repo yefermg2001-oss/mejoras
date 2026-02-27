@@ -1,0 +1,266 @@
+<style>
+/*************************************/
+/*****  DATATALENTO — Login CSS  *****/
+/*************************************/
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --dt-primary: #C17B50;
+  --dt-primary-light: #D4956A;
+  --dt-primary-dark: #A3623C;
+  --dt-dark: #1A1D23;
+  --dt-dark-card: #22262E;
+  --dt-text: #E8E9EC;
+  --dt-text-muted: #8B919A;
+  --dt-border: #333842;
+  --dt-glass: rgba(34, 38, 46, 0.88);
+  --dt-glass-border: rgba(255, 255, 255, 0.08);
+  --dt-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --dt-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  background: linear-gradient(135deg, #0f1117 0%, #1A1D23 40%, #252830 100%);
+  overflow: hidden;
+}
+
+/* === Fondo animado sutil === */
+body::before {
+  content: '';
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at 30% 50%, rgba(193, 123, 80, 0.06) 0%, transparent 50%),
+              radial-gradient(circle at 70% 80%, rgba(193, 123, 80, 0.04) 0%, transparent 50%);
+  z-index: 0;
+  animation: dt-bg-float 20s ease-in-out infinite;
+}
+
+@keyframes dt-bg-float {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  33% { transform: translate(2%, -1%) rotate(1deg); }
+  66% { transform: translate(-1%, 1%) rotate(-1deg); }
+}
+
+/* === Header / Brand === */
+.dt-brand {
+  text-align: center;
+  margin-bottom: 2rem;
+  position: relative;
+  z-index: 1;
+}
+.dt-brand h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 6px;
+  color: var(--dt-primary);
+  margin: 0;
+  text-transform: uppercase;
+}
+.dt-brand p {
+  font-size: 0.8rem;
+  color: var(--dt-text-muted);
+  letter-spacing: 3px;
+  margin: 0.3rem 0 0 0;
+  text-transform: uppercase;
+}
+
+/* === Container === */
+.container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+}
+
+/* === Card de login === */
+.card {
+  width: 420px;
+  max-width: 92vw;
+  background: var(--dt-glass) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--dt-glass-border) !important;
+  border-radius: 16px !important;
+  box-shadow: var(--dt-shadow);
+  overflow: hidden;
+  animation: dt-card-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes dt-card-enter {
+  from { opacity: 0; transform: translateY(20px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.card-header {
+  background: transparent !important;
+  border-bottom: 1px solid var(--dt-glass-border) !important;
+  padding: 1.8rem 2rem 1.2rem !important;
+  position: relative;
+}
+
+.card-header h3 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--dt-text);
+  margin: 0;
+}
+
+.card-body {
+  padding: 1.8rem 2rem 2rem !important;
+}
+
+/* === Icono decorativo === */
+.social_icon {
+  position: absolute;
+  right: 24px;
+  top: -38px;
+}
+.social_icon span {
+  font-size: 60px;
+  color: var(--dt-primary);
+  opacity: 0.9;
+  transition: var(--dt-transition);
+  filter: drop-shadow(0 4px 12px rgba(193, 123, 80, 0.3));
+}
+.social_icon span:hover {
+  color: var(--dt-primary-light);
+  cursor: default;
+  transform: scale(1.05);
+}
+
+/* === Inputs === */
+.input-group {
+  margin-bottom: 1.2rem !important;
+}
+.input-group-text {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid var(--dt-border) !important;
+  border-radius: 10px 0 0 10px !important;
+  color: var(--dt-text-muted) !important;
+  padding: 0.65rem 0.9rem !important;
+  transition: var(--dt-transition);
+}
+.form-control {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid var(--dt-border) !important;
+  border-left: none !important;
+  border-radius: 0 10px 10px 0 !important;
+  color: var(--dt-text) !important;
+  padding: 0.65rem 1rem !important;
+  font-size: 0.95rem;
+  transition: var(--dt-transition);
+}
+.form-control::placeholder {
+  color: var(--dt-text-muted) !important;
+  font-weight: 300;
+}
+.form-control:focus {
+  box-shadow: 0 0 0 3px rgba(193, 123, 80, 0.15) !important;
+  border-color: var(--dt-primary) !important;
+  outline: none !important;
+}
+.form-control:focus ~ .input-group-text,
+.input-group:focus-within .input-group-text {
+  border-color: var(--dt-primary) !important;
+  color: var(--dt-primary) !important;
+}
+
+/* === Eye button === */
+#show_password {
+  border-radius: 0 10px 10px 0 !important;
+  cursor: pointer;
+}
+.form-control + #show_password {
+  border-left: 1px solid var(--dt-border) !important;
+}
+
+/* === Checkbox === */
+.form-check-input {
+  background-color: rgba(255,255,255,0.08) !important;
+  border-color: var(--dt-border) !important;
+}
+.form-check-input:checked {
+  background-color: var(--dt-primary) !important;
+  border-color: var(--dt-primary) !important;
+}
+.form-check-label {
+  font-size: 0.85rem;
+  color: var(--dt-text-muted) !important;
+}
+
+/* === Botón Login === */
+.login_btn {
+  width: 100%;
+  padding: 0.75rem !important;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #fff !important;
+  background: linear-gradient(135deg, var(--dt-primary), var(--dt-primary-dark)) !important;
+  border: none !important;
+  border-radius: 10px !important;
+  transition: var(--dt-transition);
+  position: relative;
+  overflow: hidden;
+}
+.login_btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+  opacity: 0;
+  transition: var(--dt-transition);
+}
+.login_btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(193, 123, 80, 0.35) !important;
+  color: #fff !important;
+}
+.login_btn:hover::after {
+  opacity: 1;
+}
+.login_btn:active {
+  transform: translateY(0);
+}
+
+/* === Error message === */
+p[style*="color:red"] {
+  color: #E74C3C !important;
+  font-size: 0.85rem;
+  margin: 0 0 0.5rem 0;
+  padding: 0.5rem 0.8rem;
+  background: rgba(231, 76, 60, 0.1);
+  border-radius: 8px;
+  border-left: 3px solid #E74C3C;
+}
+
+/* === Links === */
+.links { color: var(--dt-text-muted); }
+.links a { color: var(--dt-primary); text-decoration: none; transition: var(--dt-transition); }
+.links a:hover { color: var(--dt-primary-light); }
+
+/* === Border reset === */
+.border { border-radius: 0 !important; }
+
+/* === Responsive === */
+@media (max-width: 480px) {
+  .card { border-radius: 12px !important; }
+  .card-header { padding: 1.4rem 1.5rem 1rem !important; }
+  .card-body { padding: 1.4rem 1.5rem 1.5rem !important; }
+  .dt-brand h1 { font-size: 1.6rem; letter-spacing: 4px; }
+}
+</style>

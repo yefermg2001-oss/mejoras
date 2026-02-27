@@ -1,0 +1,192 @@
+<!-- Modal -->
+<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Formación Académica</h5>
+        
+                <div class="progress">
+  <div class="progress-bar" role="progressbar" style="width: 100%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+</div>
+         <div id="estadoForm" class="mb-1 ms-2"></div>
+        
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+
+        <form class="row g-3 needs-validation formFormacion" id="formFormacion" novalidate>
+              <div class="col-md-12 mt-4"></div>
+
+            <!--Nivel Academico-->
+            <div class="col-md-4">
+              <label for="nivelEsc" class="form-label">Nivel Académico</label>
+              <select type="text" class="form-select" id="nivelEsc" required>
+                <option selected disabled value=""></option>
+                <option>Bachiller completo</option>
+                <option>Bachiller incompleto</option>
+                <option>Técnico</option>
+                <option>Técnico profesional</option>
+                <option>Tecnología</option>
+                <option>Especialización tecnologíca</option>
+                <option>Pregrado</option>
+                <option>Especialización</option>
+                <option>Maestría</option>
+                <option>Doctorado</option>
+                <option>PosDoctorado</option>
+                <option>Otro</option>
+
+            </select>
+              <div id="validationServerUsernameFeedback" class="invalid-feedback">
+                Por favor diligencie este campo.
+              </div>
+            </div>
+            <!--Close Nivel Academico-->
+
+            <!--Universidad y/o Institución-->
+            <div class="col-md-4">
+              <label for="universidad" class="form-label">Universidad y/o Institución </label>
+              <input type="text"  class="form-control" id="universidad" required>
+              <div id="validationServerUsernameFeedback" class="invalid-feedback">
+                Por favor diligencie este campo.
+              </div>
+            </div>
+            <!--Close Universidad y/o Institución-->
+
+                <!--Título Otorgado-->
+            <div class="col-md-4">
+              <label for="titulo" class="form-label">Título Otorgado</label>
+              <input type="text" class="form-control" id="titulo" required>
+              <div id="validationServerUsernameFeedback" class="invalid-feedback">
+                Por favor diligencie este campo.
+              </div>
+            </div>
+            <!--Close Título Otorgado-->
+
+
+        <!--Fecha de graduación-->
+            <div class="col-md-4">
+              <label for="fechaGraduacion" class="form-label">Fecha de graduación</label>
+              <input type="date" class="form-control" id="fechaGraduacion" required >
+
+
+              <div class="mb-3 mt-2 form-check">
+                <input onchange="validacionEstudios(this.checked)" type="checkbox" class="form-check-input" id="opEstudio" >
+                <label class="form-check-label" for="opEstudio">En curso</label>
+              </div>
+              <div id="validationServerUsernameFeedback" class="invalid-feedback">
+                Por favor diligencie este campo.
+              </div>
+            </div>
+            <!--Close Fecha de graduación-->
+
+
+            <!--Adjuntar Documentos-->
+            <div class="col-md-8">
+              <label for="formFile" class="form-label">Adjuntar Documentos</label>
+              <input class="form-control " type="file" id="formFile" onchange="arrayObjetos([this])">
+
+              <!--Barra de progreso-->
+              <div style="display:none;" class="progress mt-2" id="progress">
+                <div id="barra" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width: 100%"></div>
+
+              </div>
+              <div id="divCargar">
+
+              </div>
+              <!--Close barra de progreso-->
+            </div>
+            <!--Close Adjuntar Documentos-->
+
+
+            <!--Tarjeta Profesional-->
+            <div class="col-md-2">
+
+              <label for="tarjetaPro" class="form-label">¿Tiene tarjeta profesional?</label>
+
+              <div class="form-check form-switch mx-4">
+                <input class="form-check-input" onchange="validacionTarjeta(this.checked)" type="checkbox" id="switchCheck">
+                <label class="form-check-label" for="switchCheck">No / Si</label>
+              </div>
+
+            </div>
+            <!--Close Tarjeta Profesional-->
+
+
+            <!--Número de tarjeta-->
+            <div class="col-md-4">
+              <label for="numTarjeta" class="form-label">Número de tarjeta</label>
+              <input type="number"  class="form-control" id="numTarjeta" disabled>
+            </div>
+            <!--Close Número de tarjeta-->
+
+
+            <!--Seccional-->
+            <div class="col-md-4">
+              <label for="seccional" class="form-label">Seccional</label>
+              <input type="text"  class="form-control" id="seccional" disabled>
+            </div>
+            <!--Close Seccional-->
+
+            <!--Fecha expedición-->
+            <div class="col-md-2">
+              <label for="expedicion" class="form-label">Fecha de expedición</label>
+              <input type="date" class="form-control" id="expedicion" disabled>
+            </div>
+            <!--Close Fecha expedición-->
+
+              <!--convalidado en colombia-->
+            <div class="col-md-5">
+              <label for="convalidado" class="form-label">¿Este título se encuentra convalidado en Colombia? </label>
+               <select type="text" class="form-select" id="convalidado" disabled>
+                <option selected disabled value=""></option>
+                <option>Si</option>
+                <option>No</option>
+               </select>
+            </div>
+            <!--Convalidado en colombia-->
+
+          
+              <!--permiso otros paises-->
+            <div class="col-md-4">
+              <label for="permiso" class="form-label">¿Tiene permiso para ejercer en otro país?</label>
+               <select type="text" class="form-select" id="permiso" disabled>
+                <option selected disabled value=""></option>
+                <option>Si</option>
+                <option>No</option>
+               </select>
+            </div>
+            <!--permiso otros paises-->
+            
+            <!--PAISES -->
+            <div class="col-md-3">
+              <label for="pais" class="form-label">¿En que paises? Ej: México, España.</label>
+              <input type="text"  class="form-control" id="pais" disabled>
+              <div id="validationServerUsernameFeedback" class="invalid-feedback">
+                Por favor diligencie este campo.
+              </div>
+            </div>
+            <!--PAISES-->
+
+           
+  
+
+            
+
+
+        </form>
+
+
+
+      </div>
+      <div class="modal-footer">
+        
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+
+        <div id="bntAplicar">
+      <!-- <button type="button" id="comprobar" class="btn btn-primary">Guardar Cambios</button>-->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!--Close Modal-->

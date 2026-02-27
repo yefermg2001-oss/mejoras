@@ -1,0 +1,1040 @@
+<script>
+
+
+    /** @global */
+    var experienciaPer = [];
+    var persona = {};
+    var ruta = "";
+    var archivos = [];
+    var indices = [];
+    var statusRegistro = false;
+    var experienciaPost = []
+    var indice = 0;
+    var idPersonas = 0;
+    var banderaPersonas = 0;
+
+    var formExper = {
+
+        empresa: '',
+        cargo: '',
+        fechaIn: '',
+        fechaFin: '',
+        objeto: '',
+        funciones: '',
+        clasificacionn: '',
+        tipoproy: '',
+        dedicacion: ''
+
+    }
+
+
+    window.onload = function iniciar() {
+
+        //comprueba si se diligencio previamente y trae los datos
+        google.script.run.withSuccessHandler(filedForm).findDataRegistro2('Experiencia')
+        google.script.run.withSuccessHandler(perfil).ShowValues()
+
+
+    }
+
+    perfil = (user) => {
+
+        const per = document.getElementById("perfil")
+        per.innerHTML = user.name
+        persona.nombre = user.name
+
+    }
+
+
+
+
+    /**
+     * @function filedForm
+     * @param {string} info
+     * Carga todo la información solicitada al iniciar la página.
+     */
+    const filedForm = (info) => {
+
+        info = JSON.parse(info)
+
+
+        if (!Object.keys(info).length == 0) {
+
+
+            //Valida si trae el array de Experiencia
+            if (info.global == "Experiencia") {
+
+                persona.cedula = info.datos[0][1]
+
+
+                //Ingresa los datos de la tabla Experiencia
+                for (i = 0; i < info.datos.length; i++) {
+
+
+
+                    experienciaPer.push({
+
+                        fecha: info.datos[i][0],
+                        cedula: info.datos[i][1],
+                        empresa: info.datos[i][2],
+                        cargo: info.datos[i][3],
+                        fechaIn: info.datos[i][4],
+                        fechaFin: info.datos[i][5],
+                        objeto: info.datos[i][6],
+                        funciones: info.datos[i][7],
+                        adjunto: info.datos[i][8],
+                        sectorr: info.datos[i][9],
+                        clasificacionn: info.datos[i][10],
+                        tipoproy: info.datos[i][11],
+                        dedicacion: info.datos[i][12],
+                        id: info.datos[i][13] || 1
+
+
+                    })
+                    idPersonas = info.datos[i][13] || 1
+
+                    const valor = 100
+                    barraProgreso(valor)
+                    var status = document.getElementById("estadoForm")
+                    status.innerHTML = '<span class="badge bg-success text-white">Guardado</span>'
+                }
+                console.log('id personas ' + idPersonas)
+
+                tablaVinculados()
+
+
+
+
+            } else if (info.global == "Registro") {
+
+                persona.cedula = info.datos[3]
+                //Ingresa los datos de Registro
+                //var perfil = document.getElementById('perfil')
+                //perfil.innerHTML = info.datos[2];
+                console.log('Estado global registro')
+            }
+
+        } else {
+
+            var msn = `<div class="alert alert-warning alert-dismissible fade show" role="alert">
+                           <strong>No se encuntra registrado!</strong> Por favor realice previamente su registro antes de agregar formación academica.
+                           <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>`;
+
+            var noRegistro = document.getElementById('noRegistro')
+            noRegistro.innerHTML = msn;
+            console.log('Esta vacio')
+        }
+
+    }
+
+
+
+
+    const validarCampos = () => {
+        var forms = document.querySelectorAll('.formExperiencia')
+        var enviar = document.getElementById('addExperiencia')
+        var status = document.getElementById("estadoForm")
+
+    }
+
+
+    /*
+    // Example starter JavaScript for disabling form submissions if there are invalid fields
+    (function () {
+      'use strict'
+    
+      // Fetch all the forms we want to apply custom Bootstrap validation styles to
+      var forms = document.querySelectorAll('.formExperiencia')
+      var comprobar = document.getElementById('comprobar')
+      var status = document.getElementById("estadoForm")
+    
+      // Loop over them and prevent submission
+      Array.prototype.slice.call(forms)
+        .forEach(function (form) {
+          comprobar.addEventListener('click', function (event) {
+           status.innerHTML = '<span class="badge" style="background-color:#EFECE1; color:#333;">En progreso</span>'
+                        if (!form.checkValidity()) {
+                            event.preventDefault()
+                            event.stopPropagation()
+                            form.classList.add('was-validated')
+                        }
+                        else {
+                            event.preventDefault()
+                            datosPersonas()
+                            $('#exampleModal').modal('hide');
+                            document.getElementById('formFormacion').reset();
+                            document.getElementById('formFormacion').noValidate = false;
+                            
+                        }
+                    }, false)
+        })
+    
+         //Si existen modificaciones genera una alerta
+        Array.prototype.slice.call(forms)
+            .forEach(function (form) {
+                form.addEventListener('change', function (event) {
+                    status.innerHTML = '<span class="badge" style="background-color:#EFECE1; color:#333;">En progreso</span>'
+    
+                    //Modificamos la barra de progreso constantemente
+                    const valor = progreso()
+                    if (valor == 100) {
+                        status.innerHTML = '<span class="badge bg-success">Completo</span>'
+                    }
+                    barraProgreso(valor)
+    
+                }, false)
+            })
+    
+    
+    })()
+    */
+
+    //Get the button subir
+    let mybutton = document.getElementById("btn-back-to-top");
+    // When the user clicks on the button, scroll to the top of the document
+    mybutton.addEventListener("click", backToTop);
+
+    // When the user scrolls down 20px from the top of the document, show the button
+    window.onscroll = function () {
+        scrollFunction();
+    };
+
+    function scrollFunction() {
+        if (
+            document.body.scrollTop > 20 ||
+            document.documentElement.scrollTop > 20
+        ) {
+            mybutton.style.display = "block";
+        } else {
+            mybutton.style.display = "none";
+        }
+    }
+
+
+    function backToTop() {
+        document.body.scrollTop = 0;
+        document.documentElement.scrollTop = 0;
+    }
+
+
+    //Modifica la barra de progreso
+    function barraProgreso(valor) {
+        const barra = document.querySelector('.progress-bar')
+        barra.setAttribute("style", `width: ${valor}%`)
+        barra.setAttribute("aria-valuenow", valor)
+        barra.innerHTML = `${valor}%`
+    }
+
+
+
+    /**
+     * @function parseDedicacion
+     * Normaliza cualquier formato de dedicación a un número decimal (0 a 1).
+     * Soporta: "30%" → 0.3, "0.3" → 0.3, 0.3 → 0.3, "100%" → 1, "1" → 1
+     */
+    const parseDedicacion = (valor) => {
+        if (valor === null || valor === undefined || valor === '') return 0;
+        var str = String(valor).trim();
+        if (str.includes('%')) {
+            // Formato antiguo: "30%" → 0.3
+            return (parseInt(str.replace('%', ''), 10) || 0) / 100;
+        }
+        var num = parseFloat(str) || 0;
+        // Si el número es mayor a 1 (ej: alguien guardó "30" sin %), asumir que es porcentaje
+        if (num > 1) {
+            return num / 100;
+        }
+        return num;
+    }
+
+    /**
+     * @function formatDedicacionDisplay
+     * Convierte un valor de dedicación (cualquier formato) a texto legible: "30%"
+     */
+    const formatDedicacionDisplay = (valor) => {
+        var dec = parseDedicacion(valor);
+        return Math.round(dec * 100) + '%';
+    }
+
+    /**
+     * @function mostrarAlertaDedicacion
+     * Muestra la alerta estilizada dentro del modal cuando la dedicación excede 1 (100%).
+     */
+    const mostrarAlertaDedicacion = (resultado) => {
+        var contenedor = document.getElementById('alertaDedicacion');
+        if (!contenedor) return;
+
+        var listaHtml = resultado.experienciasConflicto.map(function (e) {
+            return '<li class="mb-1">' +
+                '<strong>' + e.empresa + '</strong> — ' +
+                '<span class="badge bg-secondary">' + Math.round(e.dedicacion * 100) + '%</span> ' +
+                '<small class="text-muted">(' + e.fechaIn + ' → ' + e.fechaFin + ')</small>' +
+                '</li>';
+        }).join('');
+
+        var totalPorcentaje = Math.round(resultado.totalConflicto * 100);
+        var nuevaPorcentaje = Math.round(resultado.dedicacionNueva * 100);
+
+        contenedor.innerHTML =
+            '<div class="alert alert-warning alert-dismissible fade show shadow-sm" role="alert" style="border-left: 4px solid #ffc107;">' +
+            '<div class="d-flex align-items-center mb-2">' +
+            '<i class="fas fa-exclamation-triangle me-2" style="font-size: 1.3rem; color: #856404;"></i>' +
+            '<strong style="font-size: 1.05rem;">Dedicación excedida</strong>' +
+            '</div>' +
+            '<p class="mb-2">La dedicación total en este período sería <strong class="text-danger">' + totalPorcentaje + '%</strong> (máximo 100%).</p>' +
+            '<hr class="my-2">' +
+            '<p class="mb-1"><strong>Experiencias que se solapan en el tiempo:</strong></p>' +
+            '<ul class="mb-2" style="list-style: none; padding-left: 0;">' + listaHtml + '</ul>' +
+            '<p class="mb-0"><i class="fas fa-plus-circle me-1"></i>Dedicación que intenta agregar: <strong>' + nuevaPorcentaje + '%</strong></p>' +
+            '<button type="button" class="btn-close" onclick="ocultarAlertaDedicacion()" aria-label="Close"></button>' +
+            '</div>';
+
+        contenedor.style.display = 'block';
+        contenedor.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    /**
+     * @function ocultarAlertaDedicacion
+     * Oculta la alerta de dedicación.
+     */
+    const ocultarAlertaDedicacion = () => {
+        var contenedor = document.getElementById('alertaDedicacion');
+        if (contenedor) {
+            contenedor.style.display = 'none';
+            contenedor.innerHTML = '';
+        }
+    }
+
+    /**
+     * @function validarDedicacion
+     * Valida que la dedicación total no supere 1 (100%) en períodos de tiempo
+     * que se solapan con la nueva experiencia.
+     * Soporta tanto el formato antiguo ("30%") como el nuevo (0.3).
+     * @param {string} nuevaFechaIn - Fecha inicio (YYYY-MM-DD)
+     * @param {string} nuevaFechaFin - Fecha fin (YYYY-MM-DD)
+     * @param {string} nuevaDedicacion - Dedicación nueva (ej: "0.3" o "30%")
+     * @param {number|null} indiceExcluir - Índice a excluir (para edición)
+     * @returns {object} { valido, dedicacionNueva, totalConflicto, experienciasConflicto }
+     */
+    const validarDedicacion = (nuevaFechaIn, nuevaFechaFin, nuevaDedicacion, indiceExcluir) => {
+
+        var dedicacionNueva = parseDedicacion(nuevaDedicacion);
+
+        if (dedicacionNueva === 0) {
+            return { valido: true, totalConflicto: 0, dedicacionNueva: 0, experienciasConflicto: [] };
+        }
+
+        var inicioNuevo = new Date(nuevaFechaIn + 'T00:00:00');
+        var finNuevo = new Date(nuevaFechaFin + 'T00:00:00');
+
+        if (isNaN(inicioNuevo.getTime()) || isNaN(finNuevo.getTime())) {
+            return { valido: true, totalConflicto: 0, dedicacionNueva: dedicacionNueva, experienciasConflicto: [] };
+        }
+
+        var dedicacionSolapada = 0;
+        var experienciasConflicto = [];
+
+        for (var i = 0; i < experienciaPer.length; i++) {
+            if (indiceExcluir !== null && indiceExcluir !== undefined && i === indiceExcluir) {
+                continue;
+            }
+
+            var exp = experienciaPer[i];
+            var inicioExp = new Date(exp.fechaIn + 'T00:00:00');
+            var finExp = new Date(exp.fechaFin + 'T00:00:00');
+
+            if (isNaN(inicioExp.getTime()) || isNaN(finExp.getTime())) {
+                continue;
+            }
+
+            // Verificar solapamiento temporal
+            if (inicioNuevo <= finExp && finNuevo >= inicioExp) {
+                var dedExp = parseDedicacion(exp.dedicacion);
+                dedicacionSolapada += dedExp;
+                experienciasConflicto.push({
+                    empresa: exp.empresa,
+                    dedicacion: dedExp,
+                    fechaIn: exp.fechaIn,
+                    fechaFin: exp.fechaFin
+                });
+            }
+        }
+
+        var totalDedicacion = dedicacionSolapada + dedicacionNueva;
+
+        // Usar tolerancia para evitar problemas de punto flotante (ej: 0.1 + 0.2 + 0.7 = 1.0000000000000002)
+        if (totalDedicacion > 1.0001) {
+            return {
+                valido: false,
+                totalConflicto: totalDedicacion,
+                dedicacionNueva: dedicacionNueva,
+                experienciasConflicto: experienciasConflicto
+            };
+        }
+
+        return { valido: true, totalConflicto: totalDedicacion, dedicacionNueva: dedicacionNueva, experienciasConflicto: [] };
+    }
+
+
+    //calcula el progreso
+    const progreso = () => {
+
+        let activos = 0
+        let validos = 0
+
+
+        for (item in formExper) {
+            const campo = document.getElementById(item)
+
+            if (!campo.hasAttribute('disabled')) {
+                activos += 1
+            }
+            if (campo.checkValidity() && !campo.hasAttribute('disabled')) {
+                validos += 1
+            }
+
+        }
+        let valor = Math.round(validos * 100 / activos)
+
+        console.log('este es el vaor ' + valor)
+        return valor
+
+    }
+
+
+
+    /**
+     * @function datosPersonas
+     * valida la información del formulario y alimenta el array que genera la tabla
+     * AHORA guarda inmediatamente cada experiencia en Google Sheet
+    */
+    const datosPersonas = () => {
+
+        const empresa = document.getElementById("empresa");
+        const cargo = document.getElementById("cargo");
+        const fechaIn = document.getElementById("fechaIn");
+        const fechaFin = document.getElementById("fechaFin");
+        const objeto = document.getElementById("objeto");
+        const funciones = document.getElementById("funciones");
+        const clasificacionn = document.getElementById("clasificacionn");
+        const tipoproy = document.getElementById("tipoproy");
+        const dedicacion = document.getElementById("dedicacion");
+
+        const fecha = (new Date(Date.now())).toLocaleDateString()
+
+        // Usar el mismo id para todas las experiencias
+        var currentId = idPersonas || 1
+
+        // Si hay archivo seleccionado, subirlo primero
+        if (archivos.length > 0) {
+            var file = archivos[0];
+            // Renombrar: Nombre - FechaFin - Sector - Clasificación - TipoProyecto.ext
+            var extension = file.name.split('.').pop();
+            var nombrePersona = persona.nombre || persona.cedula || 'Usuario';
+            var nuevoNombre = nombrePersona + ' - ' + (fechaFin.value || 'SinFecha') + ' - ' + (clasificacionn.value || '') + ' - ' + (tipoproy.value || '') + '.' + extension;
+
+            var fr = new FileReader();
+            var id = '1he4FSUfNNB8BEHQDB4LHz8HtYz4k6yPl';
+            fr.onload = function (e) {
+                var obj = {
+                    filename: nuevoNombre,
+                    mimeType: file.type,
+                    bytes: [...new Int8Array(e.target.result)]
+                };
+                $("#progress").css("display", "flex");
+                google.script.run
+                    .withSuccessHandler(function (data) {
+                        var urlArchivo = data[1] || '';
+                        $('#barra').removeClass('progress-bar-striped progress-bar-animated').addClass('bg-success');
+                        $('#barra').text('Completo');
+                        archivos = [];
+
+                        // Guardar la experiencia con la URL del archivo
+                        var nuevaExp = {
+                            fecha: fecha || "",
+                            cedula: persona.cedula || "",
+                            empresa: empresa.value || "",
+                            cargo: cargo.value || "",
+                            fechaIn: fechaIn.value,
+                            fechaFin: fechaFin.value,
+                            objeto: objeto.value || "",
+                            funciones: funciones.value || "",
+                            adjunto: urlArchivo,
+                            sectorr: "",
+                            clasificacionn: clasificacionn.value || "",
+                            tipoproy: tipoproy.value || "",
+                            dedicacion: dedicacion.value || "",
+                            id: currentId
+                        }
+                        experienciaPer.push(nuevaExp)
+                        var rowData = Object.values(nuevaExp)
+                        google.script.run
+                            .withSuccessHandler(function () {
+                                console.log('✅ Experiencia con archivo guardada: ' + nuevaExp.empresa)
+                                var status = document.getElementById("estadoForm")
+                                status.innerHTML = '<span class="badge bg-success text-white">Guardado</span>'
+                            })
+                            .withFailureHandler(function (error) {
+                                console.error('❌ Error guardando:', error)
+                            })
+                            .appendExperienciaRow(rowData);
+
+                        limpiarForm()
+                        tablaVinculados()
+                        $('#exampleModal').modal('hide');
+                    })
+                    .withFailureHandler(function (error) {
+                        console.error('❌ Error subiendo archivo:', error)
+                        $('#barra').removeClass('progress-bar-striped progress-bar-animated').addClass('bg-danger');
+                        $('#barra').text('Error');
+                    })
+                    .saveFile2(obj, persona.cedula, id);
+            };
+            fr.readAsArrayBuffer(file);
+        } else {
+            // Sin archivo: guardar directamente
+            var nuevaExp = {
+                fecha: fecha || "",
+                cedula: persona.cedula || "",
+                empresa: empresa.value || "",
+                cargo: cargo.value || "",
+                fechaIn: fechaIn.value,
+                fechaFin: fechaFin.value,
+                objeto: objeto.value || "",
+                funciones: funciones.value || "",
+                adjunto: ruta || "",
+                sectorr: "",
+                clasificacionn: clasificacionn.value || "",
+                tipoproy: tipoproy.value || "",
+                dedicacion: dedicacion.value || "",
+                id: currentId
+            }
+            experienciaPer.push(nuevaExp)
+            var rowData = Object.values(nuevaExp)
+            google.script.run
+                .withSuccessHandler(function () {
+                    console.log('✅ Experiencia guardada: ' + nuevaExp.empresa)
+                    var status = document.getElementById("estadoForm")
+                    status.innerHTML = '<span class="badge bg-success text-white">Guardado</span>'
+                    var toastMsn = {
+                        bg: "bg-success",
+                        title: "Guardado",
+                        msn: "Experiencia guardada en la base de datos",
+                        icon: "fas fa-check"
+                    }
+                    alertaMsn(toastMsn)
+                })
+                .withFailureHandler(function (error) {
+                    console.error('❌ Error guardando experiencia:', error)
+                })
+                .appendExperienciaRow(rowData);
+
+            limpiarForm()
+            tablaVinculados()
+            $('#exampleModal').modal('hide');
+        }
+    }
+
+
+    /**
+     * @function guardarInfo
+     * Cada experiencia se guarda automáticamente al agregarla.
+     * Este botón solo muestra confirmación.
+     */
+    const guardarInfo = () => {
+        var status = document.getElementById("estadoForm")
+        status.innerHTML = '<span class="badge bg-success text-white">Guardado</span>'
+        var toastMsn = {
+            bg: "bg-success",
+            title: "Guardado",
+            msn: "Todas las experiencias ya están guardadas",
+            icon: "fas fa-check"
+        }
+        alertaMsn(toastMsn)
+    }
+
+
+
+
+
+
+
+
+    /**
+     * @function tablaVinculados
+     * Crea la tabla con los datos de la formación academica 
+     * @returns {String} Retorna el html de la tabla.
+     */
+    const tablaVinculados = () => {
+
+        var table = `
+          
+          <table class="table table-dark table-hover table-sm mb-4 text-center">
+            <thead class="bg-dark text-white">
+              <tr>
+                 <th scope="col">Empresa</th>
+                <th scope="col">Objeto</th>
+                <th scope="col">Cargo desempeñado</th>
+                <th scope="col">Fecha Inicio</th>
+                <th scope="col">Fecha Fin</th>
+                <th scope="col">Funciones</th>
+                <th scope="col">Documento</th>
+                <th scope="col">Clasificación</th>
+                <th scope="col">Tipo proyecto</th>
+                <th scope="col">Dedicación</th>
+                <th scope="col">Borrar</th>
+                <th scope="col">Editar</th>
+               
+              </tr>
+            </thead>
+            <tbody>
+            ${experienciaPer.map(function (form, index) {
+            return (
+
+
+                `<tr>
+                   <td>${form.empresa}</td>
+                    <td>${form.objeto}</td>
+                    <td>${form.cargo}</td>
+                    <td>${form.fechaIn}</td>
+                    <td>${form.fechaFin}</td>
+                    <td>${form.funciones}</td>
+
+                     <td>${form.adjunto != '' ?
+                    `<a href=${form.adjunto} target="_blank"><span><i class="far fa-eye"></i></i>
+                      </span></a>` :
+                    `<span><i class="far fa-eye-slash"></i></i></i>
+                      </span></a>`
+
+                }
+                  </td>
+                    
+                    <td>${form.clasificacionn}</td>
+                    <td>${form.tipoproy}</td>
+                    <td>${formatDedicacionDisplay(form.dedicacion)}</td>
+                    
+                     <td>
+                     <button class="btn text-white" onclick="deleteExperiencia(${index})">
+                    <i class="fas fa-trash"></i></button>
+                      </td>
+                      
+                     <td>
+                    <button onclick="editarExperiencia(${index})" type="button"
+                     class="btn text-white" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                    <i class="fas fa-edit"></i>
+                    </button>
+                    </td>
+                     </tr>`
+            )
+        }).join(" ")
+            }
+            </tbody>
+            
+          </table>`
+
+        document.getElementById("tablaPersonas1").innerHTML = table
+        document.documentElement.scrollTop = document.documentElement.scrollHeight;
+
+
+    }
+
+
+
+    /**
+    * @function deleteExperiencia
+    * Permite eliminar un valor de un array
+    * @param {number} index
+    */
+    const deleteExperiencia = (index) => {
+        var toastMsn = {
+            bg: "",
+            bgStyle: "background-color:#EFECE1; color:#333;",
+            title: "Eliminado",
+            msn: "Se ha eliminado el registro correctamente",
+            icon: "fas fa-exclamation-triangle"
+        }
+        alertaMsn(toastMsn)
+
+        if (experienciaPer.length > 0) {
+
+            // Obtener datos de la fila a borrar ANTES de hacer splice
+            var item = experienciaPer[index];
+
+            // Eliminar de la base de datos (Google Sheet)
+            google.script.run
+                .withSuccessHandler(function (result) {
+                    console.log('✅ Fila eliminada de Google Sheet: ' + item.empresa)
+                })
+                .withFailureHandler(function (error) {
+                    console.error('❌ Error eliminando de Sheet:', error)
+                })
+                .eliminarExperienciaRow(
+                    persona.cedula,
+                    item.empresa,
+                    item.cargo,
+                    item.fechaIn
+                );
+
+            // Eliminar del array local
+            experienciaPer.splice(index, 1)
+            console.log('Eliminado index ' + index + ' - ' + item.empresa)
+            tablaVinculados()
+
+        } else {
+            experienciaPer = []
+            document.getElementById("tablaPersonas1").innerHTML = ""
+
+        }
+
+        var status = document.getElementById("estadoForm")
+        status.innerHTML = '<span class="badge" style="background-color:#EFECE1; color:#333;">En progreso</span>'
+        statusRegistro = false
+    }
+
+    /**
+     * @function editarExperiencia
+     * Permite ditar un valor de un array
+     * @param {number} index
+     */
+    const editarExperiencia = (index) => {
+
+        indice = index;
+        ocultarAlertaDedicacion()
+
+        //Creamos el boton para aplicar cambios en la edición
+        const buttonApply = `<button onclick="aplicarExperiencia()"id="addExperiencia" type="button" class="btn btn-primary">Aplicar Cambios</button>`
+
+        const bntAplicar = document.getElementById('bntAplicar')
+        bntAplicar.innerHTML = buttonApply;
+
+
+        const empresa = document.getElementById("empresa");
+        const objeto = document.getElementById("objeto");
+        const cargo = document.getElementById("cargo");
+        const fechaIn = document.getElementById("fechaIn");
+        const fechaFin = document.getElementById("fechaFin");
+        const funciones = document.getElementById("funciones");
+        const clasificacionn = document.getElementById("clasificacionn");
+        const tipoproy = document.getElementById("tipoproy");
+        const dedicacion = document.getElementById("dedicacion");
+
+        empresa.value = experienciaPer[index].empresa
+        objeto.value = experienciaPer[index].objeto
+        cargo.value = experienciaPer[index].cargo
+        fechaIn.value = experienciaPer[index].fechaIn
+        fechaFin.value = experienciaPer[index].fechaFin
+        funciones.value = experienciaPer[index].funciones
+        clasificacionn.value = experienciaPer[index].clasificacionn
+        tipoproy.value = experienciaPer[index].tipoproy
+        // Compatibilidad: convertir formato antiguo "30%" a "0.3" para el nuevo dropdown
+        var dedRaw = experienciaPer[index].dedicacion;
+        var dedDecimal = parseDedicacion(dedRaw);
+        dedicacion.value = String(dedDecimal)
+
+
+
+
+    }
+
+
+    const agregar = () => {
+
+        //limpiamos todo
+        limpiarForm()
+        ocultarAlertaDedicacion()
+
+        //Se crea el boton para agregar registros
+        const buttonApply = `<button type="button" id="comprobar" class="btn btn-primary">Guardar Cambios</button>`
+        const bntAplicar = document.getElementById('bntAplicar')
+        bntAplicar.innerHTML = buttonApply;
+
+
+
+        // Fetch all the forms we want to apply custom Bootstrap validation styles to
+        var forms = document.querySelectorAll('.formExperiencia')
+        var comprobar = document.getElementById('comprobar')
+        var status = document.getElementById("estadoForm")
+
+        // Loop over them and prevent submission
+        Array.prototype.slice.call(forms)
+            .forEach(function (form) {
+                comprobar.addEventListener('click', function (event) {
+                    status.innerHTML = '<span class="badge" style="background-color:#EFECE1; color:#333;">En progreso</span>'
+                    if (!form.checkValidity()) {
+                        event.preventDefault()
+                        event.stopPropagation()
+                        form.classList.add('was-validated')
+                    }
+                    else {
+                        event.preventDefault()
+
+                        // Validar dedicación antes de guardar
+                        var fechaInVal = document.getElementById('fechaIn').value;
+                        var fechaFinVal = document.getElementById('fechaFin').value;
+                        var dedicacionVal = document.getElementById('dedicacion').value;
+                        var resultadoVal = validarDedicacion(fechaInVal, fechaFinVal, dedicacionVal, null);
+
+                        if (!resultadoVal.valido) {
+                            mostrarAlertaDedicacion(resultadoVal);
+                            return; // No guardar
+                        }
+
+                        ocultarAlertaDedicacion();
+                        datosPersonas()
+                        $('#exampleModal').modal('hide');
+                        document.getElementById('formFormacion').reset();
+                        document.getElementById('formFormacion').noValidate = false;
+
+                    }
+                }, false)
+            })
+
+        //Si existen modificaciones genera una alerta
+        Array.prototype.slice.call(forms)
+            .forEach(function (form) {
+                form.addEventListener('change', function (event) {
+                    status.innerHTML = '<span class="badge" style="background-color:#EFECE1; color:#333;">En progreso</span>'
+
+                    //Modificamos la barra de progreso constantemente
+                    const valor = progreso()
+                    if (valor == 100) {
+                        status.innerHTML = '<span class="badge bg-success">Completo</span>'
+                    }
+                    barraProgreso(valor)
+
+                }, false)
+            })
+
+    }
+
+    /**
+  * @function limpiarForm
+  * Limpia los inputs del formulario
+ */
+    const limpiarForm = () => {
+        // document.getElementById('formExperiencia').classList.remove("was-validated");
+        const formsA = document.getElementById('formExperiencia')
+        const status = document.getElementById("estadoForm")
+
+        formsA.reset()
+
+        status.innerHTML = "";
+        barraProgreso(0)
+        archivos = [];
+        $("#progress").css("display", "none");
+        $("#btnCargar").css("display", "none");
+        ruta = ""
+
+    }
+
+
+
+    const aplicarExperiencia = (index) => {
+
+        const empresa = document.getElementById("empresa").value
+        const cargo = document.getElementById("cargo").value
+        const fechaIn = document.getElementById("fechaIn").value
+        const fechaFin = document.getElementById("fechaFin").value
+        const objeto = document.getElementById("objeto").value
+        const funciones = document.getElementById("funciones").value
+        const clasificacionn = document.getElementById("clasificacionn").value
+        const tipoproy = document.getElementById("tipoproy").value
+        const dedicacion = document.getElementById("dedicacion").value
+
+        // Validar dedicación antes de aplicar cambios
+        var resultadoVal = validarDedicacion(fechaIn, fechaFin, dedicacion, indice);
+        if (!resultadoVal.valido) {
+            mostrarAlertaDedicacion(resultadoVal);
+            return; // No guardar
+        }
+        ocultarAlertaDedicacion();
+
+        if (experienciaPer.length > 0) {
+
+            // Guardar valores VIEJOS para borrar la fila anterior del Sheet
+            var oldItem = experienciaPer[indice];
+            var oldEmpresa = oldItem.empresa;
+            var oldCargo = oldItem.cargo;
+            var oldFechaIn = oldItem.fechaIn;
+
+            // Actualizar el array local
+            experienciaPer[indice].cedula = persona.cedula
+            experienciaPer[indice].empresa = empresa
+            experienciaPer[indice].objeto = objeto
+            experienciaPer[indice].cargo = cargo
+            experienciaPer[indice].fechaIn = fechaIn
+            experienciaPer[indice].fechaFin = fechaFin
+            experienciaPer[indice].funciones = funciones
+            experienciaPer[indice].adjunto = ruta || oldItem.adjunto
+            experienciaPer[indice].sectorr = ""
+            experienciaPer[indice].clasificacionn = clasificacionn
+            experienciaPer[indice].tipoproy = tipoproy
+            experienciaPer[indice].dedicacion = dedicacion
+
+            // 1. Borrar la fila vieja del Sheet
+            google.script.run
+                .withSuccessHandler(function () {
+                    console.log('✅ Fila vieja eliminada del Sheet')
+                })
+                .withFailureHandler(function (error) {
+                    console.error('❌ Error eliminando fila vieja:', error)
+                })
+                .eliminarExperienciaRow(
+                    persona.cedula,
+                    oldEmpresa,
+                    oldCargo,
+                    oldFechaIn
+                );
+
+            // Mover el elemento editado al final del array para mostrarlo abajo
+            var editedItem = experienciaPer.splice(indice, 1)[0];
+            experienciaPer.push(editedItem);
+
+            // 2. Agregar la fila actualizada al Sheet
+            var updatedRow = Object.values(editedItem)
+            google.script.run
+                .withSuccessHandler(function () {
+                    console.log('✅ Fila editada guardada en Sheet')
+                    var toastMsn = {
+                        bg: "bg-success",
+                        title: "Editado",
+                        msn: "Cambios guardados en la base de datos",
+                        icon: "fas fa-check"
+                    }
+                    alertaMsn(toastMsn)
+                    var status = document.getElementById("estadoForm")
+                    status.innerHTML = '<span class="badge bg-success text-white">Guardado</span>'
+                })
+                .withFailureHandler(function (error) {
+                    console.error('❌ Error guardando edición:', error)
+                    var toastMsn = {
+                        bg: "bg-danger",
+                        title: "Error",
+                        msn: "Error al guardar edición: " + error.message,
+                        icon: "fas fa-times"
+                    }
+                    alertaMsn(toastMsn)
+                })
+                .appendExperienciaRow(updatedRow);
+
+            $('#exampleModal').modal('hide');
+            document.getElementById('formExperiencia').reset();
+            tablaVinculados()
+
+        }
+
+    }
+
+
+    //Carga los documentos que se envian al drive
+    const saveFile = (file, cedula) => {
+        //const file = f.files[0];
+        console.log('archivo ' + file.name)
+
+
+        const fr = new FileReader();
+        var id = '1he4FSUfNNB8BEHQDB4LHz8HtYz4k6yPl'
+        fr.onload = function (e) {
+            const obj = {
+                filename: file.name,
+                mimeType: file.type,
+                bytes: [...new Int8Array(e.target.result)]
+            };
+            google.script.run.withSuccessHandler(validacionAdjunto).saveFile2(obj, cedula, id);
+            $("#progress").css("display", "flex");
+
+        };
+        fr.readAsArrayBuffer(file);
+    }
+
+    //Valida que se carguen los archivos
+    const validacionAdjunto = (data) => {
+
+        var e = data[0];
+        var url = data[1];
+
+        ruta = url;
+
+        if (e) {
+
+
+            $('#barra').removeClass('progress-bar-striped progress-bar-animated').addClass('bg-success');
+            $('#barra').text('Completo');
+            $('.archivo').val('');
+            archivos = [];
+
+
+        } else {
+
+            $('#barra').removeClass('progress-bar-striped progress-bar-animated').addClass('bg-danger');
+            $('#barra').text('Hubo un error');
+            $('#formFile').val('');
+            archivos = [];
+
+        }
+    }
+
+
+    //Esta función ejecuta el metodo que carga los archivos al drive
+    const cargarInfo = () => {
+
+        var f = archivos[0];
+        var cedula = persona.cedula;
+
+        saveFile(f, cedula)
+
+    }
+
+
+
+    //Esta funcion carga todos los archivos en un array de objetos (sin mostrar botón Cargar)
+    const arrayObjetos = (f) => {
+        var objeto = f[0];
+        var file = objeto.files[0];
+        console.log('archivo seleccionado: ' + file.name)
+        archivos = [file]; // Solo un archivo a la vez
+    }
+
+    //Genera una alerta de error
+    const alertaMsn = (toastMsn) => {
+
+
+
+        var option = {
+            animation: true,
+            delay: 2000,
+        }
+
+        var toastBody =
+            `<div class="toast-container position-fixed bottom-0 end-0 p-3">
+
+            <div class="toast text-dark" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header ${toastMsn.bg}" style="${toastMsn.bgStyle || ''}" >
+                    <i class="${toastMsn.icon} rounded me-2"></i>
+                    <strong class="me-auto">${toastMsn.title}</strong>
+                    <small class="text-dark">Ahora</small>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body ${toastMsn.bg}" style="${toastMsn.bgStyle || ''}">
+                ${toastMsn.msn}
+                </div>
+            </div>
+        </div>`
+
+        const noti = document.getElementById('notificaciones').innerHTML = toastBody
+
+        var toastElList = [].slice.call(document.querySelectorAll('.toast'))
+        var toastList = toastElList.map(function (toastEl) {
+            return new bootstrap.Toast(toastEl, option)
+        })
+
+        toastList.map(function (toast) {
+            toast.show()
+        })
+    }
+
+
+
+
+</script>

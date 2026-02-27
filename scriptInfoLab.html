@@ -1,0 +1,533 @@
+<script>
+  // Example starter JavaScript for disabling form submissions if there are invalid fields
+  (function () {
+    'use strict'
+
+    // Fetch all the forms we want to apply custom Bootstrap validation styles to
+    var forms = document.querySelectorAll('.formInfoLab')
+    var status = document.getElementById("estadoForm")
+    var addConocimiento = document.getElementById("addInfoLab")
+
+    // Loop over them and prevent submission
+    Array.prototype.slice.call(forms)
+      .forEach(function (form) {
+        addConocimiento.addEventListener('click', function (event) {
+          // Si estamos en modo edición, aplicar cambios
+          if (indice >= 0) {
+            event.preventDefault()
+            event.stopPropagation()
+            aplicarInfoLab()
+            return
+          }
+
+          if (!form.checkValidity()) {
+            event.preventDefault()
+            event.stopPropagation()
+            form.classList.add('was-validated')
+          }
+          else {
+            event.preventDefault()
+            event.stopPropagation()
+            datosInfoLab()
+          }
+        }, false)
+      })
+
+    //Si existen modificaciones genera una alerta y cambia el status de registro para guardar la modificacion
+    Array.prototype.slice.call(forms)
+      .forEach(function (form) {
+        form.addEventListener('change', function (event) {
+          statusInfoLab = false
+          status.innerHTML = '<span class="badge" style="background-color:#EFECE1; color:#333;">En progreso</span>'
+        }, false)
+      })
+
+  })()
+
+  //funciones que se ejecutaran cuando la pagina carge
+  window.onload = function () {
+    //comprueba si se diligencio previamente y trae los datos — usa findDataAllInfoLab (sin filtro de Id)
+    google.script.run.withSuccessHandler(filedForm).findDataAllInfoLab()
+    google.script.run.withSuccessHandler(cedulaInfoLab).userDatos()
+    google.script.run.withSuccessHandler(especialidadList).listas("especialidad")
+    google.script.run.withSuccessHandler(tipoList).listas("tipo");
+    google.script.run.withSuccessHandler(perfil).ShowValues()
+  };
+
+  perfil = (user) => {
+    const per = document.getElementById("perfil")
+    per.innerHTML = user.name
+
+  }
+
+  //Genera la lista
+  function especialidadList(data) {
+
+    //Innicializamos la variable que ira en el HTML con el valor inicial "Seleccione"
+    var lista = '<option selected disabled value=""></option>';
+    var select = document.getElementById("especialidad");
+
+    //Construimos la lista con cada valor
+    for (i = 0; i < data.length; i++) {
+      var lista = lista + "<option>" + data[i] + "</option>"
+    }
+    select.innerHTML = lista;
+  }
+
+  //Genera la lista
+  function tipoList(data) {
+
+    //Innicializamos la variable que ira en el HTML con el valor inicial "Seleccione"
+    var lista = '<option selected disabled value=""></option>';
+    var select = document.getElementById("tipo");
+
+    //Construimos la lista con cada valor
+    for (i = 0; i < data.length; i++) {
+      var lista = lista + "<option>" + data[i] + "</option>"
+    }
+    select.innerHTML = lista;
+  }
+
+
+  //Agrega la cédula a InfoLab
+  function cedulaInfoLab(info) {
+    infoGeneral = info
+  }
+
+  /**
+   * @function filedForm
+   * Carga la info existente de la hoja Información Laboral
+   * Columnas de la hoja: A=Cédula(0), B=General(1), C=Especialidad(2), D=Tipo(3), E=AñosExp(4), F=Documento(5), G=Id(6)
+   */
+  function filedForm(info) {
+    info = JSON.parse(info)
+
+    //Construimos la de especialidades en caso de ser necesario
+    if (info.status == true && info.datos.length > 0) {
+
+      //modificamos el array personas
+      for (var i = 0; i < info.datos.length; i++) {
+        infoLab.push({
+          cedula: info.datos[i][0],
+          general: info.datos[i][1],
+          especialidad: info.datos[i][2],
+          tipo: info.datos[i][3],
+          aExp: info.datos[i][4],
+          documento: info.datos[i][5] || '',
+          status: true
+        })
+      }
+      tablaEspecialidad()
+
+      //Colocamos la información de la experiencia general
+      const general = document.getElementById("general");
+      general.value = info.datos[0][1]
+    }
+
+    const valor = progreso()
+    barraProgreso(valor)
+    if (infoLab.length > 0) {
+      var status = document.getElementById("estadoForm")
+      status.innerHTML = '<span class="badge bg-success text-white">Guardado</span>'
+    }
+  }
+
+
+  //Get the button subir
+  let mybutton = document.getElementById("btn-back-to-top");
+
+  // When the user scrolls down 20px from the top of the document, show the button
+  window.onscroll = function () {
+    scrollFunction();
+  };
+
+  function scrollFunction() {
+    if (
+      document.body.scrollTop > 20 ||
+      document.documentElement.scrollTop > 20
+    ) {
+      mybutton.style.display = "block";
+    } else {
+      mybutton.style.display = "none";
+    }
+  }
+  // When the user clicks on the button, scroll to the top of the document
+  mybutton.addEventListener("click", backToTop);
+
+  function backToTop() {
+    document.body.scrollTop = 0;
+    document.documentElement.scrollTop = 0;
+  }
+
+  //Variables globales
+  var infoLab = []
+  var infoGeneral = {}
+  var statusInfoLab = false
+  var docFile = {}
+  var indice = -1 // Para controlar la edición
+
+  //Obtiene los datos del form y guarda UNA fila en el Sheet
+  function datosInfoLab() {
+    const general = document.getElementById("general");
+    const especialidad = document.getElementById("especialidad");
+    const tipo = document.getElementById("tipo");
+    const aExp = document.getElementById("aExp");
+    const form = document.getElementById('formInfoLab');
+    const documento = document.getElementById("documento");
+
+    var nuevaEntry = {
+      cedula: infoGeneral.cedula,
+      general: general.value,
+      especialidad: especialidad.value,
+      tipo: tipo.value,
+      aExp: aExp.value,
+      documento: '',
+      status: true
+    }
+
+    // Si hay archivo seleccionado, subirlo primero con nombre personalizado
+    if (documento.value != '' && docFile && docFile.name) {
+      var file = docFile;
+      var extension = file.name.split('.').pop();
+      // Nombre: NombrePersona_Especialidad_Tipo.ext
+      var nuevoNombre = (infoGeneral.nombre || infoGeneral.cedula) + '_' + especialidad.value + '_' + tipo.value + '.' + extension;
+
+      var fr = new FileReader();
+      var idFolder = '1Q6WZopjWU4X3hnjwX8b4Ct4ZlLcdQSrV';
+      fr.onload = function (e) {
+        var obj = {
+          filename: nuevoNombre,
+          mimeType: file.type,
+          bytes: [...new Int8Array(e.target.result)]
+        };
+        google.script.run
+          .withSuccessHandler(function (data) {
+            var urlArchivo = data[1] || '';
+            nuevaEntry.documento = urlArchivo;
+            nuevaEntry.status = true;
+
+            // Guardar en el array local
+            infoLab.push(nuevaEntry);
+            tablaEspecialidad();
+
+            // Guardar UNA fila en el Sheet
+            var rowData = [nuevaEntry.cedula, nuevaEntry.general, nuevaEntry.especialidad, nuevaEntry.tipo, nuevaEntry.aExp, nuevaEntry.documento];
+            google.script.run
+              .withSuccessHandler(function () {
+                console.log('✅ Info Laboral con archivo guardada');
+                var st = document.getElementById("estadoForm");
+                st.innerHTML = '<span class="badge bg-success text-white">Guardado</span>';
+                alertaMsn({ titulo: "Guardado", descripcion: "Información laboral guardada correctamente" });
+              })
+              .withFailureHandler(function (error) { console.error('❌ Error guardando:', error); })
+              .appendInfoLabRow(rowData);
+          })
+          .withFailureHandler(function (error) { console.error('❌ Error subiendo archivo:', error); })
+          .saveFile(obj, idFolder, 0);
+      };
+      fr.readAsArrayBuffer(file);
+
+    } else {
+      // Sin archivo: guardar directamente
+      infoLab.push(nuevaEntry);
+      tablaEspecialidad();
+
+      var rowData = [nuevaEntry.cedula, nuevaEntry.general, nuevaEntry.especialidad, nuevaEntry.tipo, nuevaEntry.aExp, nuevaEntry.documento];
+      google.script.run
+        .withSuccessHandler(function () {
+          console.log('✅ Info Laboral guardada');
+          var st = document.getElementById("estadoForm");
+          st.innerHTML = '<span class="badge bg-success text-white">Guardado</span>';
+          alertaMsn({ titulo: "Guardado", descripcion: "Información laboral guardada correctamente" });
+        })
+        .withFailureHandler(function (error) { console.error('❌ Error guardando:', error); })
+        .appendInfoLabRow(rowData);
+    }
+
+    //limpiamos los inputs
+    form.reset()
+    form.classList.remove('was-validated');
+    general.value = infoLab[0].general
+    docFile = {}
+
+    //calcula el progreso
+    const valor = progreso()
+    barraProgreso(valor)
+    statusInfoLab = false
+  }
+
+  //genera la tabla con los datos de las personas vinculadas
+  function tablaEspecialidad() {
+
+    var tabla =
+      `<table class="table table-dark table-hover mb-4 text-center">
+          <thead class="bg-dark text-white">
+            <tr>
+              <th scope="col">Especialidad</th>
+              <th scope="col">Tipo</th>
+              <th scope="col">Años de Experiencia</th>
+              <th scope="col">Documento</th>
+              <th scope="col">Editar</th>
+              <th scope="col">Borrar</th>
+            </tr>
+          </thead>
+          <tbody>
+          ${infoLab.map(function (especialidad, index) {
+        return (
+
+          `<tr>
+                  <td>${especialidad.especialidad}</td>
+                  <td>${especialidad.tipo}</td>
+                  <td>${especialidad.aExp}</td>
+                  <td>${especialidad.status == false ?
+            `<div class="spinner-border spinner-border-sm text-info" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                      </div></div>`: especialidad.documento != '' ?
+              `<a href=${especialidad.documento} target="_blank"><span style="color:#fff;"><i class="far fa-eye"></i>
+                      </span></a>` :
+              `<span style="color:#fff;"><i class="far fa-eye-slash"></i>
+                      </span>`
+          }
+                  </td>
+                  <td><span onclick="editarInfoLab(${index})" style="color:#fff;cursor:pointer;"><i class="fas fa-edit"></i></span></td>
+                  <td><span onclick="deleteConocimiento(${index})" style="color:#fff;cursor:pointer;"><i class="fas fa-trash"></i></span></td>
+                </tr>`
+        )
+      }).join(" ")
+      }
+          </tbody>
+        </table>`
+
+    document.getElementById("tablaEspecialidad").innerHTML = tabla
+    document.documentElement.scrollTop = document.documentElement.scrollHeight;
+  }
+
+  /**
+   * @function deleteConocimiento
+   * Elimina una fila del array local Y de la base de datos (Google Sheet)
+   */
+  function deleteConocimiento(index) {
+    // Obtener datos de la fila ANTES de hacer splice
+    var item = infoLab[index];
+
+    // Eliminar de la base de datos (Google Sheet)
+    google.script.run
+      .withSuccessHandler(function (result) {
+        console.log('✅ Fila eliminada de Google Sheet: ' + item.especialidad);
+        alertaMsn({ titulo: "Eliminado", descripcion: "Se ha eliminado el registro correctamente" });
+      })
+      .withFailureHandler(function (error) {
+        console.error('❌ Error eliminando de Sheet:', error);
+      })
+      .eliminarInfoLabRow(
+        item.cedula.toString(),
+        item.especialidad.toString(),
+        item.tipo.toString()
+      );
+
+    // Eliminar del array local
+    if (infoLab.length > 1) {
+      infoLab.splice(index, 1)
+      tablaEspecialidad()
+    } else {
+      infoLab = []
+      document.getElementById("tablaEspecialidad").innerHTML = ""
+    }
+
+    var status = document.getElementById("estadoForm")
+    status.innerHTML = '<span class="badge" style="background-color:#EFECE1; color:#333;">En progreso</span>'
+    statusInfoLab = false
+
+    //calcula el progreso
+    const valor = progreso()
+    barraProgreso(valor)
+  }
+
+  /**
+   * @function editarInfoLab
+   * Permite editar un valor del array
+   * @param {number} index
+   */
+  function editarInfoLab(index) {
+    indice = index;
+
+    const especialidad = document.getElementById("especialidad");
+    const tipo = document.getElementById("tipo");
+    const aExp = document.getElementById("aExp");
+    const general = document.getElementById("general");
+
+    especialidad.value = infoLab[index].especialidad;
+    tipo.value = infoLab[index].tipo;
+    aExp.value = infoLab[index].aExp;
+    general.value = infoLab[index].general;
+
+    // Cambiar el texto del botón Agregar a Aplicar Cambios
+    var addBtn = document.getElementById("addInfoLab");
+    addBtn.textContent = "Aplicar Cambios";
+    addBtn.classList.remove("btn-primary");
+    addBtn.classList.add("btn-success");
+  }
+
+  /**
+   * @function aplicarInfoLab
+   * Aplica los cambios de edición: borra la fila vieja del Sheet, agrega la nueva
+   */
+  function aplicarInfoLab() {
+    const general = document.getElementById("general");
+    const especialidad = document.getElementById("especialidad");
+    const tipo = document.getElementById("tipo");
+    const aExp = document.getElementById("aExp");
+    const form = document.getElementById('formInfoLab');
+    const documento = document.getElementById("documento");
+
+    // Guardar valores VIEJOS para borrar la fila anterior del Sheet
+    var oldEspecialidad = infoLab[indice].especialidad;
+    var oldTipo = infoLab[indice].tipo;
+    var oldCedula = infoLab[indice].cedula;
+
+    // Actualizar la entrada existente en el array local
+    infoLab[indice].general = general.value;
+    infoLab[indice].especialidad = especialidad.value;
+    infoLab[indice].tipo = tipo.value;
+    infoLab[indice].aExp = aExp.value;
+
+    // 1. Borrar fila vieja del Sheet
+    google.script.run
+      .withSuccessHandler(function () {
+        console.log('✅ Fila vieja eliminada del Sheet');
+      })
+      .withFailureHandler(function (error) {
+        console.error('❌ Error eliminando fila vieja:', error);
+      })
+      .eliminarInfoLabRow(
+        oldCedula.toString(),
+        oldEspecialidad.toString(),
+        oldTipo.toString()
+      );
+
+    // 2. Agregar fila actualizada al Sheet
+    var rowData = [infoLab[indice].cedula, infoLab[indice].general, infoLab[indice].especialidad, infoLab[indice].tipo, infoLab[indice].aExp, infoLab[indice].documento];
+    google.script.run
+      .withSuccessHandler(function () {
+        console.log('✅ Edición guardada en Sheet');
+        alertaMsn({ titulo: "Editado", descripcion: "Cambios guardados en la base de datos" });
+        var st = document.getElementById("estadoForm");
+        st.innerHTML = '<span class="badge bg-success text-white">Guardado</span>';
+      })
+      .withFailureHandler(function (error) {
+        console.error('❌ Error guardando edición:', error);
+      })
+      .appendInfoLabRow(rowData);
+
+    // Limpiar el formulario
+    form.reset();
+    form.classList.remove('was-validated');
+    general.value = infoLab[0].general;
+    docFile = {};
+
+    // Restaurar el botón Agregar
+    var addBtn = document.getElementById("addInfoLab");
+    addBtn.textContent = "Agregar";
+    addBtn.classList.remove("btn-success");
+    addBtn.classList.add("btn-primary");
+
+    // Reset del índice de edición
+    indice = -1;
+
+    // Actualizar tabla
+    tablaEspecialidad();
+    statusInfoLab = false;
+  }
+
+  //calcula el progreso
+  function progreso() {
+    if (infoLab.length > 0) {
+      var valor = 100
+    } else {
+      valor = 0
+    }
+    return valor
+  }
+
+  //Modifica la barra de progreso
+  function barraProgreso(valor) {
+    const barra = document.querySelector('.progress-bar')
+    barra.setAttribute("style", `width: ${valor}%`)
+    barra.setAttribute("aria-valuenow", valor)
+    barra.innerHTML = `${valor}%`
+  }
+
+  //Genera una alerta de error
+  function alertaError(info) {
+    var option = {
+      animation: true,
+      delay: 2000,
+    }
+
+    var toastBody =
+      `<div class="toast-container position-fixed bottom-0 end-0 p-3">
+
+            <div class="toast text-white" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header bg-danger text-white">
+                    <i class="fas fa-exclamation-triangle rounded me-2"></i>
+                    <strong class="me-auto">${info.titulo}</strong>
+                    <small class="text-white">Ahora</small>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body bg-danger">
+                    ${info.descripcion}
+                </div>
+            </div>
+        </div>`
+
+    const noti = document.getElementById('notificaciones').innerHTML = toastBody
+
+    var toastElList = [].slice.call(document.querySelectorAll('.toast'))
+    var toastList = toastElList.map(function (toastEl) {
+      return new bootstrap.Toast(toastEl, option)
+    })
+
+    toastList.map(function (toast) {
+      toast.show()
+    })
+  }
+
+  //Genera una alerta de éxito
+  function alertaMsn(toastMsn) {
+    var option = {
+      animation: true,
+      delay: 2000,
+    }
+
+    var toastBody =
+      `<div class="toast-container position-fixed bottom-0 end-0 p-3">
+            <div class="toast text-white" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header" style="background-color:#EFECE1; color:#333;">
+                    <i class="fas fa-check-circle rounded me-2"></i>
+                    <strong class="me-auto">${toastMsn.titulo}</strong>
+                    <small>Ahora</small>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body" style="background-color:#EFECE1; color:#333;">
+                    ${toastMsn.descripcion}
+                </div>
+            </div>
+        </div>`
+
+    const noti = document.getElementById('notificaciones').innerHTML = toastBody
+
+    var toastElList = [].slice.call(document.querySelectorAll('.toast'))
+    var toastList = toastElList.map(function (toastEl) {
+      return new bootstrap.Toast(toastEl, option)
+    })
+
+    toastList.map(function (toast) {
+      toast.show()
+    })
+  }
+
+  function objeto(file) {
+    docFile = file.files[0];
+  }
+
+</script>
