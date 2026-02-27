@@ -33,6 +33,7 @@
         //comprueba si se diligencio previamente y trae los datos
         google.script.run.withSuccessHandler(filedForm).findDataRegistro2('Experiencia')
         google.script.run.withSuccessHandler(perfil).ShowValues()
+        google.script.run.withSuccessHandler(function (r) { if (r) { var el = document.getElementById('navBusqueda'); if (el) el.style.display = ''; } }).checkAcceso()
 
 
     }

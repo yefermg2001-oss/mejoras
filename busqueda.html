@@ -1,0 +1,595 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.3/css/all.css"
+        integrity="sha384-SZXxX4whJ79/gErwcOYf+zWLeJdY/qpuqC4cAa9rOGUstPomtqpuNWT9wdPEn2fk" crossorigin="anonymous">
+
+    <!-- Fuse.js para búsqueda difusa -->
+    <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0"></script>
+
+    <base target="_top">
+    <title>Búsqueda de Talento</title>
+</head>
+
+<body>
+    <!--Menu Lateral -->
+    <div class="offcanvas offcanvas-start bg-dark " data-bs-scroll="true" data-bs-backdrop="false" tabindex="-1"
+        id="offcanvasScrolling" aria-labelledby="offcanvasScrollingLabel">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title text-white" id="offcanvasScrollingLabel">DATATALENTO</h5>
+            <button type="button" class="btn-close text-reset " style="background-color: white;"
+                data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body">
+            <div class="d-flex flex-column align-items-center align-items-sm-start px-3 pt-2 text-white min-vh-100">
+                <ul class="nav nav-pills flex-column mb-sm-auto mb-0 align-items-center align-items-sm-start" id="menu">
+
+                    <li>
+                        <form class="d-flex mx-auto" action="<?= rutaWeb ?>" method="post">
+                            <button name="btnLogin" type="submit" value="registro"
+                                class="nav-link px-0 align-middle text-white navlinks">
+                                <i class="fas fa-table"></i>
+                                <span class="ms-1 d-none d-sm-inline">Perfil Sociodemográfico</span>
+                            </button>
+                        </form>
+                    </li>
+
+                    <li>
+                        <form class="d-flex mx-auto" action="<?= rutaWeb ?>" method="post">
+                            <button name="btnLogin" type="submit" value="vivienda"
+                                class="nav-link px-0 align-middle text-white navlinks">
+                                <i class="fas fa-laptop-house"></i>
+                                <span class="ms-1 d-none d-sm-inline">Caracterización de Vivienda</span>
+                            </button>
+                        </form>
+                    </li>
+
+                    <li>
+                        <form class="d-flex mx-auto" action="<?= rutaWeb ?>" method="post">
+                            <button name="btnLogin" type="submit" value="formacion"
+                                class="nav-link px-0 align-middle text-white navlinks">
+                                <i class="fas fa-user-graduate"></i>
+                                <span class="ms-1 d-none d-sm-inline">Formación Académica</span>
+                            </button>
+                        </form>
+                    </li>
+
+                    <li>
+                        <form class="d-flex mx-auto" action="<?= rutaWeb ?>" method="post">
+                            <button name="btnLogin" type="submit" value="mapa"
+                                class="nav-link px-0 align-middle text-white navlinks">
+                                <i class="fas fa-book-reader"></i>
+                                <span class="ms-1 d-none d-sm-inline">Formación continua</span>
+                            </button>
+                        </form>
+                    </li>
+
+                    <li>
+                        <form class="d-flex mx-auto" action="<?= rutaWeb ?>" method="post">
+                            <button name="btnLogin" type="submit" value="infoLab"
+                                class="nav-link px-0 align-middle text-white navlinks">
+                                <i class="fas fa-clipboard-list"></i>
+                                <span class="ms-1 d-none d-sm-inline">Información Laboral</span>
+                            </button>
+                        </form>
+                    </li>
+
+                    <li>
+                        <form class="d-flex mx-auto" action="<?= rutaWeb ?>" method="post">
+                            <button name="btnLogin" type="submit" value="experiencia"
+                                class="nav-link px-0 align-middle text-white navlinks">
+                                <i class="fas fa-briefcase"></i>
+                                <span class="ms-1 d-none d-sm-inline">Experiencia Laboral</span>
+                            </button>
+                        </form>
+                    </li>
+
+                    <li>
+                        <form class="d-flex mx-auto" action="<?= rutaWeb ?>" method="post">
+                            <button name="btnLogin" type="submit" value="busqueda"
+                                class="nav-link px-0 align-middle text-info navlinks fw-bold">
+                                <i class="fas fa-search"></i>
+                                <span class="ms-1 d-none d-sm-inline">Búsqueda de Talento</span>
+                            </button>
+                        </form>
+                    </li>
+
+                    <div class="dropdown pb-4 mt-4">
+                        <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle"
+                            id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+                            <img src="https://drive.google.com/uc?id=1FCyZo21HZdrhraKWzxChQHTvGtE2jhLP" alt="user"
+                                width="30" height="30" class="rounded-circle" />
+                            <span id="perfil" class="d-none d-sm-inline mx-1 text-info "></span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser1">
+                            <li>
+                                <form action="<?= rutaWeb ?>" method="post">
+                                    <button class="dropdown-item btnPage" id="btnLogin" name="btnLogin"
+                                        data-toggle="tooltip" data-placement="left" title="Presione aquí para salir"
+                                        type="submit" value="index">Salir
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <?!= include("styles");?>
+
+    <!-- Estilos específicos de búsqueda -->
+    <style>
+        .busqueda-hero {
+            background: linear-gradient(135deg, rgba(193, 123, 80, 0.15) 0%, rgba(26, 29, 35, 0) 60%);
+            border-bottom: 1px solid var(--dt-glass-border);
+            padding: 2rem 0;
+        }
+
+        .busqueda-hero h2 {
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: var(--dt-text-heading);
+        }
+
+        .busqueda-hero p {
+            color: var(--dt-text-muted);
+            max-width: 600px;
+        }
+
+        /* Filtros panel */
+        .filtros-panel {
+            background: var(--dt-dark-card);
+            border: 1px solid var(--dt-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+
+        .filtro-label {
+            color: var(--dt-text-muted);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.4rem;
+        }
+
+        .filtro-input,
+        .filtro-select {
+            background: var(--dt-dark) !important;
+            border: 1px solid var(--dt-border) !important;
+            color: var(--dt-text) !important;
+            border-radius: 10px !important;
+            padding: 0.6rem 1rem;
+            font-size: 0.85rem;
+            transition: var(--dt-transition);
+        }
+
+        .filtro-input:focus,
+        .filtro-select:focus {
+            border-color: var(--dt-primary) !important;
+            box-shadow: 0 0 0 3px rgba(193, 123, 80, 0.15) !important;
+        }
+
+        .filtro-input::placeholder {
+            color: var(--dt-text-muted);
+            opacity: 0.6;
+        }
+
+        /* Buscador principal */
+        .buscador-principal {
+            position: relative;
+        }
+
+        .buscador-principal .search-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--dt-primary);
+            font-size: 1rem;
+            z-index: 2;
+        }
+
+        .buscador-principal input {
+            padding-left: 2.8rem !important;
+            font-size: 1rem;
+            height: 48px;
+            border-radius: 12px !important;
+        }
+
+        /* Card de resultado */
+        .persona-card {
+            background: var(--dt-dark-card);
+            border: 1px solid var(--dt-border);
+            border-radius: 14px;
+            padding: 1.2rem 1.5rem;
+            margin-bottom: 1rem;
+            transition: var(--dt-transition);
+            cursor: pointer;
+        }
+
+        .persona-card:hover {
+            border-color: var(--dt-primary);
+            box-shadow: 0 4px 20px rgba(193, 123, 80, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .persona-card .nombre {
+            font-weight: 600;
+            color: var(--dt-text-heading);
+            font-size: 1rem;
+        }
+
+        .persona-card .correo {
+            color: var(--dt-text-muted);
+            font-size: 0.8rem;
+        }
+
+        .persona-card .badge-exp {
+            background: rgba(193, 123, 80, 0.15);
+            color: var(--dt-primary-light);
+            border: 1px solid rgba(193, 123, 80, 0.3);
+            font-size: 0.7rem;
+            font-weight: 500;
+            padding: 0.3rem 0.6rem;
+            border-radius: 8px;
+        }
+
+        .persona-card .badge-form {
+            background: rgba(52, 152, 219, 0.15);
+            color: #5DADE2;
+            border: 1px solid rgba(52, 152, 219, 0.3);
+            font-size: 0.7rem;
+            font-weight: 500;
+            padding: 0.3rem 0.6rem;
+            border-radius: 8px;
+        }
+
+        /* Detalle expandido */
+        .persona-detalle {
+            background: var(--dt-dark);
+            border-radius: 10px;
+            padding: 1rem 1.2rem;
+            margin-top: 0.8rem;
+            border: 1px solid var(--dt-glass-border);
+        }
+
+        .detalle-section-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--dt-primary);
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.3rem;
+            border-bottom: 1px solid var(--dt-glass-border);
+        }
+
+        .detalle-item {
+            font-size: 0.8rem;
+            color: var(--dt-text);
+            padding: 0.35rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .detalle-item:last-child {
+            border-bottom: none;
+        }
+
+        .detalle-item strong {
+            color: var(--dt-text-muted);
+            font-weight: 500;
+            font-size: 0.72rem;
+        }
+
+        /* Skeleton loading */
+        .skeleton {
+            background: linear-gradient(90deg, var(--dt-dark-card) 25%, var(--dt-dark-hover) 50%, var(--dt-dark-card) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s ease-in-out infinite;
+            border-radius: 10px;
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        .skeleton-card {
+            height: 80px;
+            margin-bottom: 1rem;
+            border-radius: 14px;
+        }
+
+        .skeleton-filter {
+            height: 40px;
+            margin-bottom: 0.8rem;
+        }
+
+        /* Stats bar */
+        .stats-bar {
+            display: flex;
+            gap: 1.5rem;
+            padding: 0.8rem 0;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .stat-number {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--dt-primary);
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: var(--dt-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Btn limpiar */
+        .btn-limpiar {
+            background: transparent;
+            border: 1px solid var(--dt-border);
+            color: var(--dt-text-muted);
+            font-size: 0.8rem;
+            border-radius: 8px;
+            padding: 0.4rem 1rem;
+            transition: var(--dt-transition);
+        }
+
+        .btn-limpiar:hover {
+            border-color: var(--dt-danger);
+            color: var(--dt-danger);
+        }
+
+        /* Sin resultados */
+        .sin-resultados {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--dt-text-muted);
+        }
+
+        .sin-resultados i {
+            font-size: 3rem;
+            color: var(--dt-border);
+            margin-bottom: 1rem;
+        }
+
+        /* Acceso denegado */
+        .acceso-denegado {
+            text-align: center;
+            padding: 4rem 1rem;
+        }
+
+        .acceso-denegado i {
+            font-size: 4rem;
+            color: var(--dt-danger);
+            margin-bottom: 1.5rem;
+        }
+
+        .acceso-denegado h3 {
+            color: var(--dt-text-heading);
+            margin-bottom: 0.5rem;
+        }
+
+        .acceso-denegado p {
+            color: var(--dt-text-muted);
+        }
+
+        /* Dedicación progress */
+        .dedicacion-bar {
+            height: 6px;
+            border-radius: 3px;
+            background: var(--dt-dark);
+            overflow: hidden;
+            width: 60px;
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 0.4rem;
+        }
+
+        .dedicacion-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.4s ease;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .filtros-panel {
+                margin-bottom: 1rem;
+            }
+        }
+    </style>
+
+    <!-- Top bar con hamburger -->
+    <div class="row g-3 align-items-center py-3 mx-3">
+        <div class="col-md-6">
+            <button class="btn btn-primary" type="button" data-bs-toggle="offcanvas"
+                data-bs-target="#offcanvasScrolling" aria-controls="offcanvasScrolling">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+        <div class="col-md-6">
+            <div class="float-end">
+                <span id="estadoBusqueda" class="badge" style="font-size: 0.7rem;"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hero section -->
+    <div class="busqueda-hero px-4">
+        <div class="d-flex align-items-center gap-3 mb-2">
+            <div
+                style="width: 48px; height: 48px; border-radius: 12px; background: rgba(193,123,80,0.1); display: flex; align-items: center; justify-content: center; border: 1px solid rgba(193,123,80,0.2);">
+                <i class="fas fa-search" style="color: var(--dt-primary); font-size: 1.2rem;"></i>
+            </div>
+            <div>
+                <h2 style="margin: 0; font-size: 1.4rem;">Búsqueda de Talento</h2>
+                <p style="margin: 0; font-size: 0.85rem;">Encuentra el equipo ideal con filtros avanzados y búsqueda
+                    inteligente</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenido principal (oculto hasta verificar acceso) -->
+    <div id="contenidoBusqueda" class="px-4 py-3" style="display: none;">
+
+        <!-- Stats bar -->
+        <div class="stats-bar mb-3" id="statsBar">
+            <div class="stat-item">
+                <span class="stat-number" id="statTotal">—</span>
+                <span class="stat-label">Personas</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" id="statFiltradas">—</span>
+                <span class="stat-label">Resultados</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" id="statExp">—</span>
+                <span class="stat-label">Experiencias</span>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Panel de filtros -->
+            <div class="col-lg-3 col-md-4 mb-3">
+                <div class="filtros-panel">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 style="color: var(--dt-text-heading); font-weight: 600; margin: 0;">
+                            <i class="fas fa-filter" style="color: var(--dt-primary); margin-right: 0.4rem;"></i>Filtros
+                        </h6>
+                        <button class="btn-limpiar" onclick="limpiarFiltros()">
+                            <i class="fas fa-times"></i> Limpiar
+                        </button>
+                    </div>
+
+                    <!-- Búsqueda de texto -->
+                    <div class="mb-3 buscador-principal">
+                        <label class="filtro-label">Búsqueda inteligente</label>
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" id="filtroBusqueda" class="form-control filtro-input"
+                            placeholder="Ej: hidráulica, ingeniero, SEDIC..." oninput="aplicarFiltros()">
+                    </div>
+
+                    <!-- Clasificación -->
+                    <div class="mb-3">
+                        <label class="filtro-label">Clasificación</label>
+                        <select id="filtroClasificacion" class="form-select filtro-select" onchange="aplicarFiltros()">
+                            <option value="">Todas</option>
+                        </select>
+                    </div>
+
+                    <!-- Tipo de Proyecto -->
+                    <div class="mb-3">
+                        <label class="filtro-label">Tipo de Proyecto</label>
+                        <select id="filtroTipoProy" class="form-select filtro-select" onchange="aplicarFiltros()">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+
+                    <!-- Nivel de formación -->
+                    <div class="mb-3">
+                        <label class="filtro-label">Nivel de Formación</label>
+                        <select id="filtroNivelForm" class="form-select filtro-select" onchange="aplicarFiltros()">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+
+                    <!-- Años mínimos de experiencia -->
+                    <div class="mb-3">
+                        <label class="filtro-label">Años mín. experiencia</label>
+                        <input type="number" id="filtroAnios" class="form-control filtro-input" placeholder="Ej: 3"
+                            min="0" max="50" step="1" oninput="aplicarFiltros()">
+                    </div>
+
+                    <!-- Dedicación mínima disponible -->
+                    <div class="mb-3">
+                        <label class="filtro-label">Dedicación máxima actual</label>
+                        <select id="filtroDedicacion" class="form-select filtro-select" onchange="aplicarFiltros()">
+                            <option value="">Cualquiera</option>
+                            <option value="0.9">Máx 90% (disponible ≥10%)</option>
+                            <option value="0.7">Máx 70% (disponible ≥30%)</option>
+                            <option value="0.5">Máx 50% (disponible ≥50%)</option>
+                            <option value="0.3">Máx 30% (disponible ≥70%)</option>
+                            <option value="0">Sin dedicación (100% libre)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resultados -->
+            <div class="col-lg-9 col-md-8">
+                <!-- Skeleton loading -->
+                <div id="skeletonLoading">
+                    <div class="skeleton skeleton-card"></div>
+                    <div class="skeleton skeleton-card"></div>
+                    <div class="skeleton skeleton-card"></div>
+                    <div class="skeleton skeleton-card"></div>
+                    <div class="skeleton skeleton-card"></div>
+                </div>
+
+                <!-- Resultados reales -->
+                <div id="resultados" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Acceso denegado -->
+    <div id="accesoDenegado" style="display: none;" class="acceso-denegado">
+        <i class="fas fa-lock"></i>
+        <h3>Acceso Restringido</h3>
+        <p>No tienes permisos de administrador para acceder a la búsqueda de talento.<br>
+            Contacta al administrador del sistema si necesitas acceso.</p>
+        <form action="<?= rutaWeb ?>" method="post" class="mt-3">
+            <button name="btnLogin" type="submit" value="registro" class="btn"
+                style="background: linear-gradient(135deg, var(--dt-primary), var(--dt-primary-dark)); color: #fff; border: none; border-radius: 10px; padding: 0.6rem 2rem;">
+                Volver al inicio
+            </button>
+        </form>
+    </div>
+
+    <!-- Jquery -->
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js"
+        integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"
+        integrity="sha384-IQsoLXl5PILFhosVNubq5LC7Qb9DXgDA9i+tQ8Zj3iwWAwPtgFTxbJ8NT4GN1R8p"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js"
+        integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF"
+        crossorigin="anonymous"></script>
+
+    <?!= include("scriptBusqueda");?>
+
+</body>
+
+</html>

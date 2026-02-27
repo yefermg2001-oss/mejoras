@@ -52,6 +52,7 @@
     google.script.run.withSuccessHandler(especialidadList).listas("especialidad")
     google.script.run.withSuccessHandler(tipoList).listas("tipo");
     google.script.run.withSuccessHandler(perfil).ShowValues()
+    google.script.run.withSuccessHandler(function (r) { if (r) { var el = document.getElementById('navBusqueda'); if (el) el.style.display = ''; } }).checkAcceso()
   };
 
   perfil = (user) => {

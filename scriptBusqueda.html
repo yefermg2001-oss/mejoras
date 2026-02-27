@@ -1,0 +1,474 @@
+<script>
+    // =============================================
+    // BÚSQUEDA INTELIGENTE DE TALENTO
+    // =============================================
+
+    var datosGlobales = null;  // Cache de todos los datos
+    var fuseInstance = null;   // Instancia de Fuse.js
+    var personasFiltradas = []; // Resultado actual del filtrado
+    var personasExpandidas = {}; // Track de cards expandidas
+
+    // =============================================
+    // INICIALIZACIÓN
+    // =============================================
+
+    window.onload = function () {
+        // Verificar acceso admin
+        google.script.run
+            .withSuccessHandler(function (esAdmin) {
+                if (esAdmin) {
+                    document.getElementById('contenidoBusqueda').style.display = 'block';
+                    document.getElementById('accesoDenegado').style.display = 'none';
+                    cargarDatos();
+                } else {
+                    document.getElementById('contenidoBusqueda').style.display = 'none';
+                    document.getElementById('accesoDenegado').style.display = 'block';
+                    document.getElementById('skeletonLoading').style.display = 'none';
+                }
+            })
+            .withFailureHandler(function (err) {
+                console.error('Error verificando acceso:', err);
+                document.getElementById('accesoDenegado').style.display = 'block';
+            })
+            .checkAcceso();
+    }
+
+    function cargarDatos() {
+        console.time('⏱ Carga de datos');
+        document.getElementById('estadoBusqueda').textContent = 'Cargando datos...';
+        document.getElementById('estadoBusqueda').className = 'badge bg-warning text-dark';
+
+        google.script.run
+            .withSuccessHandler(function (jsonStr) {
+                console.timeEnd('⏱ Carga de datos');
+                try {
+                    datosGlobales = JSON.parse(jsonStr);
+                    inicializarFuse();
+                    poblarFiltros();
+                    aplicarFiltros();
+
+                    // Ocultar skeleton, mostrar resultados
+                    document.getElementById('skeletonLoading').style.display = 'none';
+                    document.getElementById('resultados').style.display = 'block';
+
+                    // Stats
+                    document.getElementById('statTotal').textContent = datosGlobales.personas.length;
+                    var totalExp = datosGlobales.personas.reduce(function (sum, p) {
+                        return sum + p.experiencias.length;
+                    }, 0);
+                    document.getElementById('statExp').textContent = totalExp;
+
+                    document.getElementById('estadoBusqueda').textContent = 'Datos cargados ✓';
+                    document.getElementById('estadoBusqueda').className = 'badge bg-success';
+                    setTimeout(function () {
+                        document.getElementById('estadoBusqueda').textContent = '';
+                    }, 3000);
+
+                } catch (e) {
+                    console.error('Error parseando datos:', e);
+                    mostrarError('Error procesando los datos del servidor.');
+                }
+            })
+            .withFailureHandler(function (err) {
+                console.error('Error cargando datos:', err);
+                mostrarError('Error conectando con el servidor: ' + err.message);
+            })
+            .buscarTalento();
+    }
+
+    // =============================================
+    // FUSE.JS — Búsqueda difusa
+    // =============================================
+
+    function inicializarFuse() {
+        // Preparar datos planos para Fuse
+        var datosPlanos = datosGlobales.personas.map(function (p) {
+            // Concatenar todo el texto búscable de cada persona
+            var textoExp = p.experiencias.map(function (e) {
+                return [e.empresa, e.cargo, e.objeto, e.funciones, e.clasificacion, e.tipoproy].join(' ');
+            }).join(' ');
+
+            var textoForm = p.formaciones.map(function (f) {
+                return [f.nivel, f.titulo, f.universidad].join(' ');
+            }).join(' ');
+
+            var textoInfoLab = p.infoLaboral.map(function (il) {
+                return [il.especialidad, il.tipo].join(' ');
+            }).join(' ');
+
+            return {
+                cedula: p.cedula,
+                nombre: p.nombre,
+                correo: p.correo,
+                textoBuscable: [p.nombre, p.correo, textoExp, textoForm, textoInfoLab].join(' ')
+            };
+        });
+
+        fuseInstance = new Fuse(datosPlanos, {
+            keys: ['textoBuscable', 'nombre'],
+            threshold: 0.35,        // 0 = exacto, 1 = cualquier cosa
+            distance: 200,
+            includeScore: true,
+            minMatchCharLength: 2
+        });
+    }
+
+    // =============================================
+    // FILTROS
+    // =============================================
+
+    function poblarFiltros() {
+        var filtros = datosGlobales.filtros;
+
+        // Clasificaciones
+        var selectClasif = document.getElementById('filtroClasificacion');
+        filtros.clasificaciones.forEach(function (c) {
+            var opt = document.createElement('option');
+            opt.value = c;
+            opt.textContent = c;
+            selectClasif.appendChild(opt);
+        });
+
+        // Tipos proyecto
+        var selectTipo = document.getElementById('filtroTipoProy');
+        filtros.tiposProyecto.forEach(function (t) {
+            var opt = document.createElement('option');
+            opt.value = t;
+            opt.textContent = t;
+            selectTipo.appendChild(opt);
+        });
+
+        // Niveles formación
+        var selectNivel = document.getElementById('filtroNivelForm');
+        filtros.nivelesFormacion.forEach(function (n) {
+            var opt = document.createElement('option');
+            opt.value = n;
+            opt.textContent = n;
+            selectNivel.appendChild(opt);
+        });
+    }
+
+    function limpiarFiltros() {
+        document.getElementById('filtroBusqueda').value = '';
+        document.getElementById('filtroClasificacion').value = '';
+        document.getElementById('filtroTipoProy').value = '';
+        document.getElementById('filtroNivelForm').value = '';
+        document.getElementById('filtroAnios').value = '';
+        document.getElementById('filtroDedicacion').value = '';
+        aplicarFiltros();
+    }
+
+    function aplicarFiltros() {
+        if (!datosGlobales) return;
+
+        var textoBusqueda = document.getElementById('filtroBusqueda').value.trim();
+        var clasificacion = document.getElementById('filtroClasificacion').value;
+        var tipoProy = document.getElementById('filtroTipoProy').value;
+        var nivelForm = document.getElementById('filtroNivelForm').value;
+        var aniosMin = parseFloat(document.getElementById('filtroAnios').value) || 0;
+        var dedicacionMax = document.getElementById('filtroDedicacion').value;
+
+        var personasBase = datosGlobales.personas;
+
+        // Paso 1: Búsqueda difusa con Fuse.js (si hay texto)
+        var cedulasCoinciden = null;
+        if (textoBusqueda.length >= 2) {
+            var resultadosFuse = fuseInstance.search(textoBusqueda);
+            cedulasCoinciden = {};
+            resultadosFuse.forEach(function (r) {
+                cedulasCoinciden[r.item.cedula] = r.score;
+            });
+        }
+
+        // Paso 2: Aplicar filtros estructurados
+        personasFiltradas = personasBase.filter(function (persona) {
+            // Filtro Fuse
+            if (cedulasCoinciden !== null && !(persona.cedula in cedulasCoinciden)) {
+                return false;
+            }
+
+            // Filtro por Clasificación
+            if (clasificacion) {
+                var tieneClasif = persona.experiencias.some(function (e) {
+                    return e.clasificacion === clasificacion;
+                });
+                if (!tieneClasif) return false;
+            }
+
+            // Filtro por Tipo de Proyecto
+            if (tipoProy) {
+                var tieneTipo = persona.experiencias.some(function (e) {
+                    return e.tipoproy === tipoProy;
+                });
+                if (!tieneTipo) return false;
+            }
+
+            // Filtro por Nivel de Formación
+            if (nivelForm) {
+                var tieneNivel = persona.formaciones.some(function (f) {
+                    return f.nivel === nivelForm;
+                });
+                if (!tieneNivel) return false;
+            }
+
+            // Filtro por Años mínimos de experiencia
+            if (aniosMin > 0) {
+                var aniosTotales = calcularAniosExperiencia(persona.experiencias);
+                if (aniosTotales < aniosMin) return false;
+            }
+
+            // Filtro por Dedicación máxima actual
+            if (dedicacionMax !== '') {
+                var dedicTotal = calcularDedicacionActual(persona.experiencias);
+                if (dedicTotal > parseFloat(dedicacionMax)) return false;
+            }
+
+            return true;
+        });
+
+        // Ordenar por relevancia Fuse si hay búsqueda de texto
+        if (cedulasCoinciden !== null) {
+            personasFiltradas.sort(function (a, b) {
+                return (cedulasCoinciden[a.cedula] || 1) - (cedulasCoinciden[b.cedula] || 1);
+            });
+        }
+
+        // Actualizar stats
+        document.getElementById('statFiltradas').textContent = personasFiltradas.length;
+
+        // Renderizar
+        renderizarResultados();
+    }
+
+
+    // =============================================
+    // CÁLCULOS
+    // =============================================
+
+    function calcularAniosExperiencia(experiencias) {
+        var totalDias = 0;
+        experiencias.forEach(function (exp) {
+            if (!exp.fechaIn) return;
+            var inicio = new Date(exp.fechaIn);
+            var fin = exp.fechaFin ? new Date(exp.fechaFin) : new Date();
+            if (isNaN(inicio.getTime())) return;
+            if (isNaN(fin.getTime())) fin = new Date();
+            var dias = (fin - inicio) / (1000 * 60 * 60 * 24);
+            if (dias > 0) totalDias += dias;
+        });
+        return Math.round((totalDias / 365) * 10) / 10; // 1 decimal
+    }
+
+    function parseDedicacion(valor) {
+        if (!valor && valor !== 0) return 0;
+        var str = valor.toString().trim();
+        if (str === '') return 0;
+        if (str.indexOf('%') !== -1) {
+            var num = parseFloat(str.replace('%', ''));
+            return isNaN(num) ? 0 : (num > 1 ? num / 100 : num);
+        }
+        var num = parseFloat(str);
+        if (isNaN(num)) return 0;
+        return num > 1 ? num / 100 : num;
+    }
+
+    function calcularDedicacionActual(experiencias) {
+        var hoy = new Date();
+        var totalDedic = 0;
+        experiencias.forEach(function (exp) {
+            if (!exp.fechaIn) return;
+            var inicio = new Date(exp.fechaIn);
+            var fin = exp.fechaFin ? new Date(exp.fechaFin) : new Date('2099-12-31');
+            if (isNaN(inicio.getTime())) return;
+            if (hoy >= inicio && hoy <= fin) {
+                totalDedic += parseDedicacion(exp.dedicacion);
+            }
+        });
+        return Math.min(totalDedic, 1);
+    }
+
+    function formatDedicacion(valor) {
+        var dec = parseDedicacion(valor);
+        return Math.round(dec * 100) + '%';
+    }
+
+    function getDedicacionColor(valor) {
+        var dec = parseDedicacion(valor);
+        if (dec >= 0.8) return '#E74C3C';
+        if (dec >= 0.5) return '#F39C12';
+        if (dec >= 0.2) return '#C17B50';
+        return '#2ECC71';
+    }
+
+
+    // =============================================
+    // RENDERIZADO
+    // =============================================
+
+    function renderizarResultados() {
+        var container = document.getElementById('resultados');
+
+        if (personasFiltradas.length === 0) {
+            container.innerHTML = `
+                <div class="sin-resultados">
+                    <i class="fas fa-user-slash"></i>
+                    <h5>No se encontraron resultados</h5>
+                    <p>Intenta ajustar los filtros o usa términos de búsqueda diferentes</p>
+                </div>`;
+            return;
+        }
+
+        var html = '';
+        personasFiltradas.forEach(function (persona, idx) {
+            var anios = calcularAniosExperiencia(persona.experiencias);
+            var dedicActual = calcularDedicacionActual(persona.experiencias);
+            var dedicColor = getDedicacionColor(dedicActual);
+            var expandida = personasExpandidas[persona.cedula] || false;
+
+            // Badges de experiencia (máx 3)
+            var badgesExp = '';
+            var clasificaciones = [];
+            persona.experiencias.forEach(function (e) {
+                if (e.clasificacion && clasificaciones.indexOf(e.clasificacion) === -1) {
+                    clasificaciones.push(e.clasificacion);
+                }
+            });
+            clasificaciones.slice(0, 3).forEach(function (c) {
+                badgesExp += '<span class="badge-exp me-1">' + c + '</span>';
+            });
+            if (clasificaciones.length > 3) {
+                badgesExp += '<span class="badge-exp me-1">+' + (clasificaciones.length - 3) + '</span>';
+            }
+
+            // Badges de formación
+            var badgesForm = '';
+            persona.formaciones.slice(0, 2).forEach(function (f) {
+                var texto = f.nivel || f.titulo;
+                if (texto) {
+                    badgesForm += '<span class="badge-form me-1">' + texto + '</span>';
+                }
+            });
+
+            html += `
+            <div class="persona-card" onclick="toggleDetalle('${persona.cedula}')">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                    <div>
+                        <div class="nombre">
+                            <i class="fas fa-user-circle" style="color: var(--dt-primary); margin-right: 0.3rem; font-size: 0.9rem;"></i>
+                            ${persona.nombre || 'Sin nombre'}
+                        </div>
+                        <div class="correo">${persona.correo || '—'} · Cédula: ${persona.cedula}</div>
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="text-center">
+                            <div style="font-size: 1.1rem; font-weight: 700; color: var(--dt-primary);">${anios}</div>
+                            <div style="font-size: 0.65rem; color: var(--dt-text-muted); text-transform: uppercase;">Años exp.</div>
+                        </div>
+                        <div class="text-center">
+                            <div style="font-size: 1.1rem; font-weight: 700; color: ${dedicColor};">${Math.round(dedicActual * 100)}%</div>
+                            <div style="font-size: 0.65rem; color: var(--dt-text-muted); text-transform: uppercase;">Dedicación</div>
+                        </div>
+                        <div>
+                            <i class="fas fa-chevron-${expandida ? 'up' : 'down'}" 
+                               style="color: var(--dt-text-muted); font-size: 0.8rem;"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-2 d-flex flex-wrap gap-1">
+                    ${badgesExp}${badgesForm}
+                </div>
+                ${expandida ? renderizarDetalle(persona) : ''}
+            </div>`;
+        });
+
+        container.innerHTML = html;
+    }
+
+    function renderizarDetalle(persona) {
+        var html = '<div class="persona-detalle" onclick="event.stopPropagation()">';
+
+        // Experiencia
+        if (persona.experiencias.length > 0) {
+            html += '<div class="detalle-section-title"><i class="fas fa-briefcase me-1"></i> Experiencia Laboral (' + persona.experiencias.length + ')</div>';
+            persona.experiencias.forEach(function (exp) {
+                var dedicVal = parseDedicacion(exp.dedicacion);
+                var dedicPct = Math.round(dedicVal * 100);
+                var barColor = getDedicacionColor(dedicVal);
+                html += `
+                <div class="detalle-item">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <strong>Empresa:</strong> ${exp.empresa || '—'}
+                            &nbsp;·&nbsp; <strong>Cargo:</strong> ${exp.cargo || '—'}
+                        </div>
+                        <div style="white-space: nowrap;">
+                            ${dedicPct}%
+                            <span class="dedicacion-bar">
+                                <span class="dedicacion-bar-fill" style="width: ${dedicPct}%; background: ${barColor};"></span>
+                            </span>
+                        </div>
+                    </div>
+                    <div style="margin-top: 0.2rem;">
+                        <strong>Periodo:</strong> ${exp.fechaIn || '—'} → ${exp.fechaFin || 'Actual'}
+                        &nbsp;·&nbsp; <strong>Clasif.:</strong> ${exp.clasificacion || '—'}
+                        &nbsp;·&nbsp; <strong>Tipo:</strong> ${exp.tipoproy || '—'}
+                    </div>
+                    ${exp.objeto ? '<div style="margin-top: 0.2rem;"><strong>Objeto:</strong> ' + exp.objeto + '</div>' : ''}
+                </div>`;
+            });
+        }
+
+        // Formación
+        if (persona.formaciones.length > 0) {
+            html += '<div class="detalle-section-title mt-3"><i class="fas fa-graduation-cap me-1"></i> Formación Académica (' + persona.formaciones.length + ')</div>';
+            persona.formaciones.forEach(function (form) {
+                html += `
+                <div class="detalle-item">
+                    <strong>Nivel:</strong> ${form.nivel || '—'}
+                    &nbsp;·&nbsp; <strong>Título:</strong> ${form.titulo || '—'}
+                    &nbsp;·&nbsp; <strong>Universidad:</strong> ${form.universidad || '—'}
+                    &nbsp;·&nbsp; <strong>Estado:</strong> ${form.estado || '—'}
+                </div>`;
+            });
+        }
+
+        // Info laboral
+        if (persona.infoLaboral.length > 0) {
+            html += '<div class="detalle-section-title mt-3"><i class="fas fa-clipboard-list me-1"></i> Información Laboral</div>';
+            persona.infoLaboral.forEach(function (il) {
+                html += `
+                <div class="detalle-item">
+                    <strong>Especialidad:</strong> ${il.especialidad || '—'}
+                    &nbsp;·&nbsp; <strong>Tipo:</strong> ${il.tipo || '—'}
+                </div>`;
+            });
+        }
+
+        html += '</div>';
+        return html;
+    }
+
+    function toggleDetalle(cedula) {
+        personasExpandidas[cedula] = !personasExpandidas[cedula];
+        renderizarResultados();
+    }
+
+
+    // =============================================
+    // UTILIDADES
+    // =============================================
+
+    function mostrarError(mensaje) {
+        document.getElementById('skeletonLoading').style.display = 'none';
+        document.getElementById('resultados').style.display = 'block';
+        document.getElementById('resultados').innerHTML = `
+            <div class="sin-resultados">
+                <i class="fas fa-exclamation-triangle" style="color: var(--dt-danger);"></i>
+                <h5 style="color: var(--dt-danger);">Error</h5>
+                <p>${mensaje}</p>
+            </div>`;
+        document.getElementById('estadoBusqueda').textContent = 'Error';
+        document.getElementById('estadoBusqueda').className = 'badge bg-danger';
+    }
+
+</script>

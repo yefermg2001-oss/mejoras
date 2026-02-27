@@ -1,6 +1,6 @@
 //Variables globales
 //var rutaWeb =  google.script.url();
-var rutaWeb = "https://script.google.com/a/macros/sedic.com.co/s/AKfycbyEdqUoNHWlqWMIilTy5HVsnTmpppSrqnbivMzDo8TSmp7psgkiIWFfuFOFDTgtee3y/exec"
+var rutaWeb = "https://script.google.com/a/macros/sedic.com.co/s/AKfycbxVrkEvUwCCzEDr0gtqy1iyRzRc0l6DASCHICRtTn0NHgjRZIF6R69T_hlbXGNZdEbQ/exec"
 //var rutaWeb = "https://script.google.com/macros/s/AKfycbz2aHx3QLV7MkP8h7_LXlSsxsgDWq4XH3t0Xbb0vek/dev";
 var ssId = "11q-sSgjnXKFy1xTCFIvpEvZaL16iBtAEa7TdPaq0lDs";
 var ssDb = "BD";
@@ -449,4 +449,202 @@ function testDiagnostico() {
   }
 }
 
+
+/**
+ * @function checkAcceso
+ * Verifica si el usuario actual tiene rol de "admin" en la columna "Acceso" de la hoja Usuarios.
+ * @returns {boolean} true si el usuario es admin, false si no
+ */
+function checkAcceso() {
+  var ss = SpreadsheetApp.openById(ssId);
+  var db = ss.getSheetByName('Usuarios');
+  var data = db.getDataRange().getValues();
+  var user = ShowValues();
+
+  // Buscar columna "Acceso"
+  var accesoCol = -1;
+  for (var i = 0; i < data[0].length; i++) {
+    if (data[0][i].toString().trim().toLowerCase() == "acceso") {
+      accesoCol = i;
+      break;
+    }
+  }
+
+  if (accesoCol == -1) {
+    Logger.log("checkAcceso: columna 'Acceso' no encontrada en Usuarios");
+    return false;
+  }
+
+  // Buscar email del usuario actual
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][4] == user.email) {
+      var acceso = data[i][accesoCol].toString().trim().toLowerCase();
+      Logger.log("checkAcceso: usuario " + user.email + " tiene acceso=" + acceso);
+      return acceso === "admin";
+    }
+  }
+
+  Logger.log("checkAcceso: usuario " + user.email + " no encontrado");
+  return false;
+}
+
+
+/**
+ * @function buscarTalento
+ * Carga TODOS los datos de Registro, Experiencia y Formación,
+ * los cruza por cédula y retorna un JSON consolidado para búsqueda client-side.
+ * Solo accesible por admins (validado en el frontend).
+ * @returns {string} JSON con estructura { personas: [...], filtros: {...} }
+ */
+function buscarTalento() {
+  var ss = SpreadsheetApp.openById(ssId);
+  
+  // --- Leer Registro ---
+  var dbRegistro = ss.getSheetByName('Registro');
+  var dataRegistro = dbRegistro.getDataRange().getValues();
+  
+  // --- Leer Experiencia ---
+  var dbExp = ss.getSheetByName('Experiencia');
+  var dataExp = dbExp.getDataRange().getValues();
+  
+  // --- Leer Formación ---
+  var dbForm = ss.getSheetByName('Formación');
+  var dataForm = dbForm.getDataRange().getValues();
+  
+  // --- Leer Información Laboral ---
+  var dbInfoLab = ss.getSheetByName('Información Laboral');
+  var dataInfoLab = dbInfoLab ? dbInfoLab.getDataRange().getValues() : [];
+  
+  // --- Construir mapa de personas por cédula ---
+  var personasMap = {};
+  var clasificacionesSet = {};
+  var tiposProyectoSet = {};
+  var nivelesFormacionSet = {};
+  
+  // Procesar Registro (col 0=Fecha, 1=Nombre, 2=Correo, 3=Cédula)
+  // Buscar columnas dinámicamente
+  var regCedulaCol = 0;
+  for (var i = 0; i < dataRegistro[0].length; i++) {
+    if (dataRegistro[0][i] == "Cédula") { regCedulaCol = i; break; }
+  }
+  
+  for (var i = 1; i < dataRegistro.length; i++) {
+    var cedula = dataRegistro[i][regCedulaCol].toString().trim();
+    if (cedula == "") continue;
+    
+    personasMap[cedula] = {
+      cedula: cedula,
+      nombre: dataRegistro[i][1] || "",
+      correo: dataRegistro[i][2] || "",
+      experiencias: [],
+      formaciones: [],
+      infoLaboral: []
+    };
+  }
+  
+  // Procesar Experiencia
+  // Columnas: Fecha(0), Cédula(1), Empresa(2), Cargo(3), FechaIn(4), FechaFin(5), 
+  //           Objeto(6), Funciones(7), Adjunto(8), Sector(9), Clasificación(10), TipoProy(11), Dedicación(12)
+  var expCedulaCol = 0;
+  if (dataExp.length > 0) {
+    for (var i = 0; i < dataExp[0].length; i++) {
+      if (dataExp[0][i] == "Cédula") { expCedulaCol = i; break; }
+    }
+  }
+  
+  for (var i = 1; i < dataExp.length; i++) {
+    var cedula = dataExp[i][expCedulaCol].toString().trim();
+    if (cedula == "" || !personasMap[cedula]) continue;
+    
+    var fechaIn = dataExp[i][4];
+    var fechaFin = dataExp[i][5];
+    
+    // Formatear fechas
+    if (fechaIn instanceof Date) {
+      fechaIn = Utilities.formatDate(fechaIn, SpreadsheetApp.getActive().getSpreadsheetTimeZone(), 'yyyy-MM-dd');
+    }
+    if (fechaFin instanceof Date) {
+      fechaFin = Utilities.formatDate(fechaFin, SpreadsheetApp.getActive().getSpreadsheetTimeZone(), 'yyyy-MM-dd');
+    }
+    
+    var clasificacion = (dataExp[i][10] || "").toString().trim();
+    var tipoProy = (dataExp[i][11] || "").toString().trim();
+    var dedicacion = (dataExp[i][12] || "").toString().trim();
+    
+    if (clasificacion) clasificacionesSet[clasificacion] = true;
+    if (tipoProy) tiposProyectoSet[tipoProy] = true;
+    
+    personasMap[cedula].experiencias.push({
+      empresa: (dataExp[i][2] || "").toString(),
+      cargo: (dataExp[i][3] || "").toString(),
+      fechaIn: fechaIn.toString(),
+      fechaFin: fechaFin.toString(),
+      objeto: (dataExp[i][6] || "").toString(),
+      funciones: (dataExp[i][7] || "").toString(),
+      clasificacion: clasificacion,
+      tipoproy: tipoProy,
+      dedicacion: dedicacion
+    });
+  }
+  
+  // Procesar Formación
+  // Columnas: Fecha(0), Cédula(1), NivelEsc(2), Universidad(3), Titulo(4), Estado(5), FechaGraduacion(6)
+  var formCedulaCol = 0;
+  if (dataForm.length > 0) {
+    for (var i = 0; i < dataForm[0].length; i++) {
+      if (dataForm[0][i] == "Cédula") { formCedulaCol = i; break; }
+    }
+  }
+  
+  for (var i = 1; i < dataForm.length; i++) {
+    var cedula = dataForm[i][formCedulaCol].toString().trim();
+    if (cedula == "" || !personasMap[cedula]) continue;
+    
+    var nivel = (dataForm[i][2] || "").toString().trim();
+    if (nivel) nivelesFormacionSet[nivel] = true;
+    
+    personasMap[cedula].formaciones.push({
+      nivel: nivel,
+      universidad: (dataForm[i][3] || "").toString(),
+      titulo: (dataForm[i][4] || "").toString(),
+      estado: (dataForm[i][5] || "").toString()
+    });
+  }
+  
+  // Procesar Información Laboral
+  if (dataInfoLab.length > 0) {
+    var infoLabCedulaCol = 0;
+    for (var i = 0; i < dataInfoLab[0].length; i++) {
+      if (dataInfoLab[0][i] == "Cédula") { infoLabCedulaCol = i; break; }
+    }
+    
+    for (var i = 1; i < dataInfoLab.length; i++) {
+      var cedula = dataInfoLab[i][infoLabCedulaCol].toString().trim();
+      if (cedula == "" || !personasMap[cedula]) continue;
+      
+      personasMap[cedula].infoLaboral.push({
+        especialidad: (dataInfoLab[i][2] || "").toString(),
+        tipo: (dataInfoLab[i][3] || "").toString()
+      });
+    }
+  }
+  
+  // Convertir mapa a array
+  var personas = [];
+  for (var key in personasMap) {
+    personas.push(personasMap[key]);
+  }
+  
+  var resultado = {
+    personas: personas,
+    filtros: {
+      clasificaciones: Object.keys(clasificacionesSet).sort(),
+      tiposProyecto: Object.keys(tiposProyectoSet).sort(),
+      nivelesFormacion: Object.keys(nivelesFormacionSet).sort()
+    }
+  };
+  
+  Logger.log("buscarTalento: " + personas.length + " personas cargadas");
+  return JSON.stringify(resultado);
+}
 

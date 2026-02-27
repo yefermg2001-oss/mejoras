@@ -41,6 +41,7 @@
     google.script.run.withSuccessHandler(filedForm).findDataAllMapa()
     google.script.run.withSuccessHandler(cedulaMapa).userDatos()
     google.script.run.withSuccessHandler(perfil).ShowValues()
+    google.script.run.withSuccessHandler(function (r) { if (r) { var el = document.getElementById('navBusqueda'); if (el) el.style.display = ''; } }).checkAcceso()
   };
 
   perfil = (user) => {
