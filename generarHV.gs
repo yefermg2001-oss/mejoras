@@ -148,6 +148,12 @@ function generarHojaDeVida(cedula) {
     var doc = DocumentApp.openById(docId);
     var body = doc.getBody();
 
+    // Actualizar fecha en el encabezado del documento
+    var header = doc.getHeader();
+    if (header) {
+      header.replaceText("FECHA:.*", "FECHA: " + _formatFecha(new Date()));
+    }
+
     body.replaceText("\\{\\{NOMBRE\\}\\}", nombrePersona);
     body.replaceText("\\{\\{CEDULA\\}\\}", cedula);
 
@@ -241,73 +247,68 @@ function generarHojaDeVida(cedula) {
     }
 
     // =============================================
-    // 5. FORMACIÓN ACADÉMICA + INFO LABORAL (Table 1, Row 10)
+    // 5. FORMACIÓN ACADÉMICA + INFO LABORAL
+    //    ENFOQUE: LLENAR FILAS EXISTENTES + BORRAR SOBRANTES
     // =============================================
 
-    // Usar la tabla de datos personales encontrada arriba
     if (tablaDatos) {
       var tablaGrande = tablaDatos;
       
-      // Buscar la fila template (la que contiene los marcadores {{F_UNIVERSIDAD}})
-      var filaTemplate = -1;
+      // Buscar la primera fila de datos (la que tiene los marcadores o la primera fila vacía después de los encabezados)
+      var filaInicioData = -1;
       for (var r = 0; r < tablaGrande.getNumRows(); r++) {
         try {
           var cellText = tablaGrande.getCell(r, 0).getText();
           if (cellText.indexOf("{{F_UNIVERSIDAD}}") >= 0 || cellText.indexOf("F_UNIVERSIDAD") >= 0) {
-            filaTemplate = r;
+            filaInicioData = r;
             break;
           }
         } catch (e) { }
       }
-      
-      // Si no encontramos marcador, intentar la última fila
-      if (filaTemplate < 0) filaTemplate = tablaGrande.getNumRows() - 1;
+      if (filaInicioData < 0) filaInicioData = tablaGrande.getNumRows() - 1;
 
-      // Llenar la primera fila con la primera formación (si hay)
-      if (formaciones.length > 0) {
-        _llenarFilaFormacion(tablaGrande, filaTemplate, formaciones[0]);
+      // Contar cuántas filas de datos hay disponibles (desde filaInicioData hasta el final)
+      var filasDisponibles = tablaGrande.getNumRows() - filaInicioData;
+      var maxFilas = Math.max(formaciones.length, experiencias.length);
+
+      // Llenar las filas existentes con formación (lado izquierdo)
+      for (var f = 0; f < formaciones.length && f < filasDisponibles; f++) {
+        _llenarFilaFormacion(tablaGrande, filaInicioData + f, formaciones[f]);
       }
 
-      // Para formaciones adicionales, insertar nuevas filas
-      for (var f = 1; f < formaciones.length; f++) {
-        var newRow = tablaGrande.insertTableRow(filaTemplate + f);
-        // Copiar estructura de celdas de la fila template
-        var templateRow = tablaGrande.getRow(filaTemplate);
-        for (var c = 0; c < templateRow.getNumCells(); c++) {
-          if (c >= newRow.getNumCells()) {
-            newRow.appendTableCell("");
-          }
+      // Llenar las filas existentes con info laboral (lado derecho)
+      for (var e = 0; e < experiencias.length && e < filasDisponibles; e++) {
+        _llenarFilaInfoLaboral(tablaGrande, filaInicioData + e, experiencias[e]);
+      }
+
+      // Borrar filas sobrantes (de abajo hacia arriba para no desplazar índices)
+      var totalFilas = tablaGrande.getNumRows();
+      for (var r = totalFilas - 1; r >= filaInicioData + maxFilas; r--) {
+        try {
+          tablaGrande.removeRow(r);
+        } catch (e) {
+          Logger.log("Error borrando fila sobrante " + r + ": " + e.toString());
         }
-        _llenarFilaFormacion(tablaGrande, filaTemplate + f, formaciones[f]);
       }
 
-      // Llenar la primera fila de info laboral (experiencias, lado derecho)
-      if (experiencias.length > 0) {
-        _llenarFilaInfoLaboral(tablaGrande, filaTemplate, experiencias[0]);
-      }
-      for (var e = 1; e < experiencias.length && e < formaciones.length; e++) {
-        _llenarFilaInfoLaboral(tablaGrande, filaTemplate + e, experiencias[e]);
-      }
-      // Si hay más experiencias que formaciones, agregar filas adicionales
-      for (var e = Math.max(formaciones.length, 1); e < experiencias.length; e++) {
-        var rowIdx = filaTemplate + e;
-        if (rowIdx >= tablaGrande.getNumRows()) {
-          var newRow = tablaGrande.appendTableRow();
-          for (var c = 0; c < tablaGrande.getRow(filaTemplate).getNumCells(); c++) {
-            if (c >= newRow.getNumCells()) {
-              newRow.appendTableCell("");
+      // Limpiar marcadores restantes en filas que no se llenaron
+      for (var r = filaInicioData; r < tablaGrande.getNumRows(); r++) {
+        try {
+          for (var c = 0; c < tablaGrande.getRow(r).getNumCells(); c++) {
+            var txt = tablaGrande.getCell(r, c).getText();
+            if (txt.indexOf("{{") >= 0) {
+              tablaGrande.getCell(r, c).setText("");
             }
           }
-        }
-        _llenarFilaInfoLaboral(tablaGrande, rowIdx, experiencias[e]);
+        } catch (e) { }
       }
     }
 
     // =============================================
-    // 6. EXPERIENCIA DETALLADA (Table 3: Objeto + Funciones)
+    // 6. EXPERIENCIA DETALLADA (Objeto + Funciones)
+    //    ENFOQUE: LLENAR FILAS EXISTENTES + BORRAR SOBRANTES
     // =============================================
 
-    // Buscar la tabla de objeto/funciones
     var tablaExp = null;
     for (var t = 0; t < tablas.length; t++) {
       try {
@@ -320,26 +321,35 @@ function generarHojaDeVida(cedula) {
     }
 
     if (tablaExp && experiencias.length > 0) {
-      // La plantilla tiene filas 2, 3, 4 como template (3 filas por experiencia)
-      // Fila 2: Objeto + CARGO
-      // Fila 3: Objeto + % DEDICACIÓN
-      // Fila 4: Objeto + FUNCIONES
+      // 1 FILA por experiencia (todo con saltos de línea dentro de cada celda)
+      var filaInicioExp = 2;
+      var filasDisponiblesExp = tablaExp.getNumRows() - filaInicioExp;
 
-      // Llenar primera experiencia en las filas template
-      _llenarExpDetalle(tablaExp, 2, experiencias[0]);
+      // Llenar las experiencias en las filas existentes
+      for (var e = 0; e < experiencias.length && e < filasDisponiblesExp; e++) {
+        _llenarExpDetalle(tablaExp, filaInicioExp + e, experiencias[e]);
+      }
 
-      // Para experiencias adicionales, insertar 3 filas por cada una
-      for (var e = 1; e < experiencias.length; e++) {
-        var baseRow = 2 + (e * 3);
-        for (var r = 0; r < 3; r++) {
-          var newRow = tablaExp.insertTableRow(baseRow + r);
-          for (var c = 0; c < 4; c++) {
-            if (c >= newRow.getNumCells()) {
-              newRow.appendTableCell("");
+      // Borrar filas sobrantes (de abajo hacia arriba)
+      var totalFilasExp = tablaExp.getNumRows();
+      for (var r = totalFilasExp - 1; r >= filaInicioExp + experiencias.length; r--) {
+        try {
+          tablaExp.removeRow(r);
+        } catch (e) {
+          Logger.log("Error borrando fila exp sobrante " + r + ": " + e.toString());
+        }
+      }
+
+      // Limpiar marcadores sobrantes
+      for (var r = filaInicioExp; r < tablaExp.getNumRows(); r++) {
+        try {
+          for (var c = 0; c < tablaExp.getRow(r).getNumCells(); c++) {
+            var txt = tablaExp.getCell(r, c).getText();
+            if (txt.indexOf("{{") >= 0) {
+              tablaExp.getCell(r, c).setText("");
             }
           }
-        }
-        _llenarExpDetalle(tablaExp, baseRow, experiencias[e]);
+        } catch (e) { }
       }
     }
 
@@ -496,33 +506,28 @@ function _llenarFilaInfoLaboral(tabla, rowIdx, experiencia) {
  * Fila 1: Objeto + % DEDICACIÓN
  * Fila 2: Objeto + FUNCIONES
  */
-function _llenarExpDetalle(tabla, baseRow, experiencia) {
+function _llenarExpDetalle(tabla, rowIdx, experiencia) {
   try {
+    var row = tabla.getRow(rowIdx);
+    
+    // Columna 0: Objeto + Empresa
     var objTexto = experiencia.objeto + "\n" + experiencia.empresa;
-
-    // Fila 1: Cargo
-    var row1 = tabla.getRow(baseRow);
-    row1.getCell(0).setText(objTexto);
-    row1.getCell(1).setText("CARGO: " + experiencia.cargo);
-    row1.getCell(2).setText(experiencia.fechaIn);
-    row1.getCell(3).setText(experiencia.fechaFin);
-
-    // Fila 2: Dedicación
-    var row2 = tabla.getRow(baseRow + 1);
-    row2.getCell(0).setText(objTexto);
-    row2.getCell(1).setText("% DEDICACIÓN: " + _formatDedicacion(experiencia.dedicacion));
-    row2.getCell(2).setText(experiencia.fechaIn);
-    row2.getCell(3).setText(experiencia.fechaFin);
-
-    // Fila 3: Funciones
-    var row3 = tabla.getRow(baseRow + 2);
-    row3.getCell(0).setText(objTexto);
-    row3.getCell(1).setText("FUNCIONES: " + experiencia.funciones);
-    row3.getCell(2).setText(experiencia.fechaIn);
-    row3.getCell(3).setText(experiencia.fechaFin);
+    row.getCell(0).setText(objTexto);
+    
+    // Columna 1: Cargo + Dedicación + Funciones (todo junto con saltos de línea)
+    var detalleTexto = "CARGO: " + experiencia.cargo + 
+      "\n% DEDICACIÓN: " + _formatDedicacion(experiencia.dedicacion) +
+      "\nFUNCIONES: " + experiencia.funciones;
+    row.getCell(1).setText(detalleTexto);
+    
+    // Columna 2: Fecha inicio
+    row.getCell(2).setText(experiencia.fechaIn);
+    
+    // Columna 3: Fecha fin
+    row.getCell(3).setText(experiencia.fechaFin);
 
   } catch (e) {
-    Logger.log("Error llenando exp detalle fila " + baseRow + ": " + e.toString());
+    Logger.log("Error llenando exp detalle fila " + rowIdx + ": " + e.toString());
   }
 }
 
