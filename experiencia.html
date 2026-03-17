@@ -304,6 +304,38 @@
 
   </div>
 
+  <!-- Modal de confirmación de fechas (experiencia > 5 años) -->
+  <div class="modal" id="modalConfirmarFechas" tabindex="-1" aria-hidden="true" style="z-index: 1065;">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content"
+        style="background: #22262E; border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; box-shadow: 0 12px 40px rgba(0,0,0,0.5);">
+        <div class="modal-body text-center" style="padding: 2rem 2rem 1rem;">
+          <div
+            style="width: 64px; height: 64px; border-radius: 50%; background: rgba(243,156,18,0.12); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 1rem; border: 2px solid rgba(243,156,18,0.3);">
+            <i class="fas fa-calendar-check" style="font-size: 1.6rem; color: #F39C12;"></i>
+          </div>
+          <h5 style="color: #FFFFFF; font-weight: 700; margin-bottom: 0.5rem;">Verificación de fechas</h5>
+          <p id="modalFechasTexto" style="color: #8B919A; font-size: 0.88rem; line-height: 1.6; margin-bottom: 0;"></p>
+        </div>
+        <div class="modal-footer"
+          style="border-top: 1px solid rgba(255,255,255,0.06); padding: 1rem 2rem 1.5rem; justify-content: center; gap: 0.8rem;">
+          <button type="button" id="btnFechasCancelar" class="btn"
+            style="background: transparent; border: 1px solid #333842; color: #8B919A; border-radius: 10px; padding: 0.55rem 1.8rem; font-weight: 500; font-size: 0.85rem; transition: all 0.3s ease;"
+            onmouseover="this.style.borderColor='#E74C3C';this.style.color='#E74C3C';"
+            onmouseout="this.style.borderColor='#333842';this.style.color='#8B919A';">
+            Corregir fechas
+          </button>
+          <button type="button" id="btnFechasConfirmar" class="btn"
+            style="background: linear-gradient(135deg, #C17B50, #A3623C); border: none; color: #fff; border-radius: 10px; padding: 0.55rem 1.8rem; font-weight: 600; font-size: 0.85rem; box-shadow: 0 4px 12px rgba(193,123,80,0.3); transition: all 0.3s ease;"
+            onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 6px 16px rgba(193,123,80,0.4)';"
+            onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 12px rgba(193,123,80,0.3)';">
+            <i class="fas fa-check me-1"></i> Sí, son correctas
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 
   <!-- Jquery -->
   <script src="https://code.jquery.com/jquery-2.2.4.min.js"

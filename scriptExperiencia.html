@@ -406,6 +406,105 @@
 
 
     /**
+     * @function validarFechasExperiencia
+     * Valida las fechas de inicio y fin de una experiencia.
+     * Usa un flag para evitar bucles infinitos con el modal de confirmación.
+     */
+    var _fechasYaConfirmadas = false; // Flag: el usuario ya confirmó las fechas largas
+    var _fechasCallbackPendiente = null; // Callback guardado para ejecutar tras confirmar
+
+    function validarFechasExperiencia(fechaInVal, fechaFinVal, callbackConfirmado) {
+        if (!fechaInVal || !fechaFinVal) return true;
+
+        var inicio = new Date(fechaInVal + 'T00:00:00');
+        var fin = new Date(fechaFinVal + 'T00:00:00');
+
+        if (isNaN(inicio.getTime()) || isNaN(fin.getTime())) return true;
+
+        // Validación 1: Fecha fin no puede ser anterior a fecha inicio
+        if (fin < inicio) {
+            var toastMsn = {
+                bg: "bg-danger",
+                title: "Error en fechas",
+                msn: "La fecha de finalización (" + fechaFinVal + ") no puede ser anterior a la fecha de inicio (" + fechaInVal + "). Por favor verifique las fechas ingresadas.",
+                icon: "fas fa-exclamation-triangle"
+            };
+            alertaMsn(toastMsn);
+            return false;
+        }
+
+        // Validación 2: Si supera 5 años y NO ha sido confirmada aún
+        var diasDif = (fin - inicio) / (1000 * 60 * 60 * 24);
+        var aniosDif = Math.round((diasDif / 365.25) * 10) / 10;
+
+        if (aniosDif > 5 && !_fechasYaConfirmadas) {
+            // Preparar texto
+            document.getElementById('modalFechasTexto').innerHTML =
+                'La experiencia que está registrando abarca <strong style="color:#F39C12;">' + aniosDif + ' años</strong> ' +
+                '(desde <strong>' + fechaInVal + '</strong> hasta <strong>' + fechaFinVal + '</strong>).<br><br>' +
+                'Si las fechas son correctas, presione <strong>"Sí, son correctas"</strong>. ' +
+                'De lo contrario, presione <strong>"Corregir fechas"</strong> para modificarlas.';
+
+            // Guardar callback
+            _fechasCallbackPendiente = callbackConfirmado;
+
+            // Mostrar modal manualmente (sin Bootstrap Modal API para evitar conflictos)
+            var modalEl = document.getElementById('modalConfirmarFechas');
+            modalEl.style.display = 'block';
+            modalEl.classList.add('show');
+            // Agregar overlay oscuro
+            if (!document.getElementById('overlayFechas')) {
+                var overlay = document.createElement('div');
+                overlay.id = 'overlayFechas';
+                overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:1060;';
+                document.body.appendChild(overlay);
+            }
+
+            return false; // Detener guardado
+        }
+
+        return true; // Pasa validación (o ya fue confirmada)
+    }
+
+    // Función para cerrar el modal de fechas manualmente
+    function _cerrarModalFechas() {
+        var modalEl = document.getElementById('modalConfirmarFechas');
+        modalEl.style.display = 'none';
+        modalEl.classList.remove('show');
+        var overlay = document.getElementById('overlayFechas');
+        if (overlay) overlay.remove();
+    }
+
+    // Configurar botones del modal
+    document.addEventListener('DOMContentLoaded', function () {
+        // Botón "Sí, son correctas" → setea flag, cierra modal, ejecuta callback
+        document.getElementById('btnFechasConfirmar').addEventListener('click', function () {
+            _fechasYaConfirmadas = true;
+            _cerrarModalFechas();
+            if (_fechasCallbackPendiente) {
+                var cb = _fechasCallbackPendiente;
+                _fechasCallbackPendiente = null;
+                cb(); // Esto re-ejecuta datosPersonas/aplicarExperiencia pero con el flag=true
+            }
+        });
+
+        // Botón "Corregir fechas" → solo cierra el modal, el formulario queda abierto
+        document.getElementById('btnFechasCancelar').addEventListener('click', function () {
+            _fechasCallbackPendiente = null;
+            _cerrarModalFechas();
+        });
+    });
+
+    // Resetear el flag cuando las fechas cambien
+    document.addEventListener('DOMContentLoaded', function () {
+        var fi = document.getElementById('fechaIn');
+        var ff = document.getElementById('fechaFin');
+        if (fi) fi.addEventListener('change', function () { _fechasYaConfirmadas = false; });
+        if (ff) ff.addEventListener('change', function () { _fechasYaConfirmadas = false; });
+    });
+
+
+    /**
      * @function datosPersonas
      * valida la información del formulario y alimenta el array que genera la tabla
      * AHORA guarda inmediatamente cada experiencia en Google Sheet
@@ -421,6 +520,16 @@
         const clasificacionn = document.getElementById("clasificacionn");
         const tipoproy = document.getElementById("tipoproy");
         const dedicacion = document.getElementById("dedicacion");
+
+        // Validar fechas antes de continuar (con callback para modal >5 años)
+        if (!validarFechasExperiencia(fechaIn.value, fechaFin.value, function () {
+            datosPersonas(); // Re-ejecutar con flag=true
+            $('#exampleModal').modal('hide');
+            var formReset = document.getElementById('formFormacion');
+            if (formReset) { formReset.reset(); formReset.noValidate = false; }
+        })) {
+            return false; // No guardar si las fechas son inválidas o modal pendiente
+        }
 
         const fecha = (new Date(Date.now())).toLocaleDateString()
 
@@ -782,10 +891,12 @@
                         }
 
                         ocultarAlertaDedicacion();
-                        datosPersonas()
-                        $('#exampleModal').modal('hide');
-                        document.getElementById('formFormacion').reset();
-                        document.getElementById('formFormacion').noValidate = false;
+                        var guardado = datosPersonas();
+                        if (guardado !== false) {
+                            $('#exampleModal').modal('hide');
+                            document.getElementById('formFormacion').reset();
+                            document.getElementById('formFormacion').noValidate = false;
+                        }
 
                     }
                 }, false)
@@ -842,6 +953,13 @@
         const clasificacionn = document.getElementById("clasificacionn").value
         const tipoproy = document.getElementById("tipoproy").value
         const dedicacion = document.getElementById("dedicacion").value
+
+        // Validar fechas antes de continuar (con callback para modal >5 años)
+        if (!validarFechasExperiencia(fechaIn, fechaFin, function () {
+            aplicarExperiencia(index); // Re-ejecutar si confirma desde el modal
+        })) {
+            return; // No guardar si las fechas son inválidas o modal pendiente
+        }
 
         // Validar dedicación antes de aplicar cambios
         var resultadoVal = validarDedicacion(fechaIn, fechaFin, dedicacion, indice);

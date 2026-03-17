@@ -428,6 +428,62 @@
                 margin-bottom: 1rem;
             }
         }
+
+        /* Filter chips */
+        .filtros-activos {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            align-items: center;
+        }
+
+        .filtro-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.2rem 0.55rem;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 500;
+            background: rgba(193, 123, 80, 0.15);
+            color: #C17B50;
+            border: 1px solid rgba(193, 123, 80, 0.3);
+            cursor: default;
+            transition: all 0.2s;
+        }
+
+        .filtro-chip .chip-close {
+            cursor: pointer;
+            font-size: 0.8rem;
+            opacity: 0.7;
+            margin-left: 0.1rem;
+            transition: opacity 0.15s;
+        }
+
+        .filtro-chip .chip-close:hover {
+            opacity: 1;
+        }
+
+        .btn-copiar {
+            background: transparent;
+            border: 1px solid rgba(193, 123, 80, 0.3);
+            color: #C17B50;
+            font-size: 0.72rem;
+            padding: 0.25rem 0.6rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-copiar:hover {
+            background: rgba(193, 123, 80, 0.15);
+        }
+
+        .btn-copiar.copiado {
+            background: rgba(46, 204, 113, 0.15);
+            border-color: rgba(46, 204, 113, 0.3);
+            color: #2ECC71;
+        }
     </style>
 
     <!-- Top bar con hamburger -->
@@ -479,6 +535,14 @@
             </div>
         </div>
 
+        <!-- Chips de filtros activos + botón copiar -->
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <div id="filtrosActivos" class="filtros-activos"></div>
+            <button id="btnCopiar" class="btn-copiar" onclick="copiarListado()" style="display:none;">
+                <i class="fas fa-copy"></i> Copiar listado
+            </button>
+        </div>
+
         <div class="row">
             <!-- Panel de filtros -->
             <div class="col-lg-3 col-md-4 mb-3">
@@ -498,6 +562,14 @@
                         <i class="fas fa-search search-icon"></i>
                         <input type="text" id="filtroBusqueda" class="form-control filtro-input"
                             placeholder="Ej: hidráulica, ingeniero, SEDIC..." oninput="aplicarFiltros()">
+                    </div>
+
+                    <!-- Sector (datos antiguos y nuevos) -->
+                    <div class="mb-3">
+                        <label class="filtro-label">Sector</label>
+                        <select id="filtroSector" class="form-select filtro-select" onchange="aplicarFiltros()">
+                            <option value="">Todos</option>
+                        </select>
                     </div>
 
                     <!-- Clasificación -->
@@ -529,6 +601,8 @@
                         <label class="filtro-label">Años mín. experiencia</label>
                         <input type="number" id="filtroAnios" class="form-control filtro-input" placeholder="Ej: 3"
                             min="0" max="50" step="1" oninput="aplicarFiltros()">
+                        <small style="color: #666; font-size: 0.7rem;">Si seleccionas clasificación o tipo, filtra años
+                            en esa categoría</small>
                     </div>
 
                     <!-- Dedicación mínima disponible -->

@@ -85,7 +85,7 @@
         var datosPlanos = datosGlobales.personas.map(function (p) {
             // Concatenar todo el texto búscable de cada persona
             var textoExp = p.experiencias.map(function (e) {
-                return [e.empresa, e.cargo, e.objeto, e.funciones, e.clasificacion, e.tipoproy].join(' ');
+                return [e.empresa, e.cargo, e.objeto, e.funciones, e.sector, e.clasificacion, e.tipoproy].join(' ');
             }).join(' ');
 
             var textoForm = p.formaciones.map(function (f) {
@@ -116,27 +116,92 @@
     // =============================================
     // FILTROS
     // =============================================
+    // Listas de opciones ACTUALES (de modalExperiencia.html)
+    var CLASIFICACIONES_ACTUALES = [
+        'Estudios y Diseños', 'Interventoría', 'Construcción',
+        'Mantenimiento y Operación', 'Modernización y Repotenciación',
+        'Consultoría y Asesoría', 'Gerencia de Proyectos',
+        'Seguridad y Salud (SST)', 'Gestión Ambiental y Social',
+        'Topografía y Geotecnia', 'Logística y Suministros',
+        'Puesta en Marcha', 'Estructuración'
+    ];
+
+    var TIPOS_PROYECTO_ACTUALES = [
+        'Centrales Hidroeléctricas', 'Vías Convencionales',
+        'Sistemas Ferroviarios y Masivos', 'Subestaciones y Redes Eléctricas',
+        'Plantas de Tratamiento', 'Acueducto y Alcantarillado',
+        'Obras Hidráulicas y de Control', 'Puentes y Viaductos',
+        'Túneles y Obras Subterráneas', 'Estructuras de Contención',
+        'Cimentaciones Profundas', 'Edificaciones',
+        'Infraestructura Industrial', 'Parques Solares y Eólicos',
+        'Distritos de Riego y Drenaje', 'Oil & Gas',
+        'Obras de Urbanismo', 'Obras Marítimas y Fluviales',
+        'Obras Aeroportuarias', 'Minería',
+        'Infraestructura de Residuos Sólidos', 'Redes Secas',
+        'Telecomunicaciones', 'Restauración y Patrimonio'
+    ];
+
+    /**
+     * Crea un select con optgroup separando valores actuales de anteriores
+     */
+    function _crearSelectAgrupado(selectEl, todosLosValores, valoresActuales) {
+        var actuales = [];
+        var anteriores = [];
+
+        todosLosValores.forEach(function (val) {
+            if (valoresActuales.indexOf(val) !== -1) {
+                actuales.push(val);
+            } else {
+                anteriores.push(val);
+            }
+        });
+
+        if (actuales.length > 0) {
+            var grupo1 = document.createElement('optgroup');
+            grupo1.label = '── Actuales ──';
+            actuales.sort().forEach(function (v) {
+                var opt = document.createElement('option');
+                opt.value = v;
+                opt.textContent = v;
+                grupo1.appendChild(opt);
+            });
+            selectEl.appendChild(grupo1);
+        }
+
+        if (anteriores.length > 0) {
+            var grupo2 = document.createElement('optgroup');
+            grupo2.label = '── Anteriores ──';
+            anteriores.sort().forEach(function (v) {
+                var opt = document.createElement('option');
+                opt.value = v;
+                opt.textContent = v;
+                grupo2.appendChild(opt);
+            });
+            selectEl.appendChild(grupo2);
+        }
+    }
 
     function poblarFiltros() {
         var filtros = datosGlobales.filtros;
 
-        // Clasificaciones
-        var selectClasif = document.getElementById('filtroClasificacion');
-        filtros.clasificaciones.forEach(function (c) {
-            var opt = document.createElement('option');
-            opt.value = c;
-            opt.textContent = c;
-            selectClasif.appendChild(opt);
-        });
+        // Sectores
+        var selectSector = document.getElementById('filtroSector');
+        if (selectSector && filtros.sectores) {
+            filtros.sectores.forEach(function (s) {
+                var opt = document.createElement('option');
+                opt.value = s;
+                opt.textContent = s;
+                selectSector.appendChild(opt);
+            });
+        }
 
-        // Tipos proyecto
+        // Clasificaciones (con optgroup actual/anterior)
+        var selectClasif = document.getElementById('filtroClasificacion');
+        _crearSelectAgrupado(selectClasif, filtros.clasificaciones, CLASIFICACIONES_ACTUALES);
+
+        // Tipos proyecto (con optgroup actual/anterior)
         var selectTipo = document.getElementById('filtroTipoProy');
-        filtros.tiposProyecto.forEach(function (t) {
-            var opt = document.createElement('option');
-            opt.value = t;
-            opt.textContent = t;
-            selectTipo.appendChild(opt);
-        });
+        _crearSelectAgrupado(selectTipo, filtros.tiposProyecto, TIPOS_PROYECTO_ACTUALES);
 
         // Niveles formación
         var selectNivel = document.getElementById('filtroNivelForm');
@@ -150,6 +215,7 @@
 
     function limpiarFiltros() {
         document.getElementById('filtroBusqueda').value = '';
+        document.getElementById('filtroSector').value = '';
         document.getElementById('filtroClasificacion').value = '';
         document.getElementById('filtroTipoProy').value = '';
         document.getElementById('filtroNivelForm').value = '';
@@ -158,10 +224,36 @@
         aplicarFiltros();
     }
 
+    /**
+     * Calcula años de experiencia agrupados por una categoría (clasificacion o tipoproy).
+     * @param {Array} experiencias - Array de experiencias de la persona
+     * @param {string} campo - 'clasificacion' o 'tipoproy'
+     * @returns {Object} { 'Construcción': 4.5, 'Interventoría': 2.0, ... }
+     */
+    function calcularAniosPorCategoria(experiencias, campo) {
+        var resultado = {};
+        experiencias.forEach(function (exp) {
+            var cat = exp[campo] || 'Sin clasificar';
+            var fi = exp.fechaIn ? new Date(exp.fechaIn + 'T00:00:00') : null;
+            var ff = exp.fechaFin ? new Date(exp.fechaFin + 'T00:00:00') : null;
+            if (fi && ff && !isNaN(fi) && !isNaN(ff) && ff > fi) {
+                var dias = (ff - fi) / (1000 * 60 * 60 * 24);
+                var anios = dias / 365.25;
+                resultado[cat] = (resultado[cat] || 0) + anios;
+            }
+        });
+        // Redondear
+        for (var k in resultado) {
+            resultado[k] = Math.round(resultado[k] * 10) / 10;
+        }
+        return resultado;
+    }
+
     function aplicarFiltros() {
         if (!datosGlobales) return;
 
         var textoBusqueda = document.getElementById('filtroBusqueda').value.trim();
+        var sector = document.getElementById('filtroSector').value;
         var clasificacion = document.getElementById('filtroClasificacion').value;
         var tipoProy = document.getElementById('filtroTipoProy').value;
         var nivelForm = document.getElementById('filtroNivelForm').value;
@@ -185,6 +277,14 @@
             // Filtro Fuse
             if (cedulasCoinciden !== null && !(persona.cedula in cedulasCoinciden)) {
                 return false;
+            }
+
+            // Filtro por Sector
+            if (sector) {
+                var tieneSector = persona.experiencias.some(function (e) {
+                    return e.sector === sector;
+                });
+                if (!tieneSector) return false;
             }
 
             // Filtro por Clasificación
@@ -212,9 +312,18 @@
             }
 
             // Filtro por Años mínimos de experiencia
+            // Si hay clasificación o tipo seleccionado, filtra años EN esa categoría
             if (aniosMin > 0) {
-                var aniosTotales = calcularAniosExperiencia(persona.experiencias);
-                if (aniosTotales < aniosMin) return false;
+                if (clasificacion) {
+                    var porClasif = calcularAniosPorCategoria(persona.experiencias, 'clasificacion');
+                    if ((porClasif[clasificacion] || 0) < aniosMin) return false;
+                } else if (tipoProy) {
+                    var porTipo = calcularAniosPorCategoria(persona.experiencias, 'tipoproy');
+                    if ((porTipo[tipoProy] || 0) < aniosMin) return false;
+                } else {
+                    var aniosTotales = calcularAniosExperiencia(persona.experiencias);
+                    if (aniosTotales < aniosMin) return false;
+                }
             }
 
             // Filtro por Dedicación máxima actual
@@ -226,10 +335,30 @@
             return true;
         });
 
-        // Ordenar por relevancia Fuse si hay búsqueda de texto
+        // Ordenar por relevancia
         if (cedulasCoinciden !== null) {
+            // Si hay búsqueda de texto, ordenar por score Fuse
             personasFiltradas.sort(function (a, b) {
                 return (cedulasCoinciden[a.cedula] || 1) - (cedulasCoinciden[b.cedula] || 1);
+            });
+        } else if (clasificacion) {
+            // Si hay filtro de clasificación, ordenar por más años en esa clasificación
+            personasFiltradas.sort(function (a, b) {
+                var aAnios = (calcularAniosPorCategoria(a.experiencias, 'clasificacion')[clasificacion] || 0);
+                var bAnios = (calcularAniosPorCategoria(b.experiencias, 'clasificacion')[clasificacion] || 0);
+                return bAnios - aAnios;
+            });
+        } else if (tipoProy) {
+            // Si hay filtro de tipo, ordenar por más años en ese tipo
+            personasFiltradas.sort(function (a, b) {
+                var aAnios = (calcularAniosPorCategoria(a.experiencias, 'tipoproy')[tipoProy] || 0);
+                var bAnios = (calcularAniosPorCategoria(b.experiencias, 'tipoproy')[tipoProy] || 0);
+                return bAnios - aAnios;
+            });
+        } else if (aniosMin > 0) {
+            // Si hay filtro de años mínimos sin categoría, ordenar por experiencia total desc
+            personasFiltradas.sort(function (a, b) {
+                return calcularAniosExperiencia(b.experiencias) - calcularAniosExperiencia(a.experiencias);
             });
         }
 
@@ -238,6 +367,7 @@
 
         // Renderizar
         renderizarResultados();
+        actualizarFiltrosActivos();
     }
 
 
@@ -246,17 +376,44 @@
     // =============================================
 
     function calcularAniosExperiencia(experiencias) {
-        var totalDias = 0;
+        // Recolectar todos los intervalos [inicio, fin] como timestamps
+        var intervalos = [];
         experiencias.forEach(function (exp) {
             if (!exp.fechaIn) return;
             var inicio = new Date(exp.fechaIn);
             var fin = exp.fechaFin ? new Date(exp.fechaFin) : new Date();
             if (isNaN(inicio.getTime())) return;
             if (isNaN(fin.getTime())) fin = new Date();
-            var dias = (fin - inicio) / (1000 * 60 * 60 * 24);
-            if (dias > 0) totalDias += dias;
+            if (fin > inicio) {
+                intervalos.push([inicio.getTime(), fin.getTime()]);
+            }
         });
-        return Math.round((totalDias / 365) * 10) / 10; // 1 decimal
+
+        if (intervalos.length === 0) return 0;
+
+        // Ordenar intervalos por fecha de inicio
+        intervalos.sort(function (a, b) { return a[0] - b[0]; });
+
+        // Merge: fusionar intervalos que se solapan
+        var merged = [intervalos[0]];
+        for (var i = 1; i < intervalos.length; i++) {
+            var ultimo = merged[merged.length - 1];
+            if (intervalos[i][0] <= ultimo[1]) {
+                // Se solapan → extender el fin si es mayor
+                ultimo[1] = Math.max(ultimo[1], intervalos[i][1]);
+            } else {
+                // No se solapan → agregar nuevo intervalo
+                merged.push(intervalos[i]);
+            }
+        }
+
+        // Sumar días de intervalos fusionados (sin overlap)
+        var totalDias = 0;
+        merged.forEach(function (intervalo) {
+            totalDias += (intervalo[1] - intervalo[0]) / (1000 * 60 * 60 * 24);
+        });
+
+        return Math.round((totalDias / 365.25) * 10) / 10; // 1 decimal, año = 365.25
     }
 
     function parseDedicacion(valor) {
@@ -325,19 +482,15 @@
             var dedicColor = getDedicacionColor(dedicActual);
             var expandida = personasExpandidas[persona.cedula] || false;
 
-            // Badges de experiencia (máx 3)
+            // Badges de experiencia con años (top 3 por años, desc)
             var badgesExp = '';
-            var clasificaciones = [];
-            persona.experiencias.forEach(function (e) {
-                if (e.clasificacion && clasificaciones.indexOf(e.clasificacion) === -1) {
-                    clasificaciones.push(e.clasificacion);
-                }
+            var porClasifBadge = calcularAniosPorCategoria(persona.experiencias, 'clasificacion');
+            var clasifOrdenadas = Object.keys(porClasifBadge).sort(function (a, b) { return porClasifBadge[b] - porClasifBadge[a]; });
+            clasifOrdenadas.slice(0, 3).forEach(function (c) {
+                badgesExp += '<span class="badge-exp me-1">' + c + ' · ' + porClasifBadge[c] + ' años</span>';
             });
-            clasificaciones.slice(0, 3).forEach(function (c) {
-                badgesExp += '<span class="badge-exp me-1">' + c + '</span>';
-            });
-            if (clasificaciones.length > 3) {
-                badgesExp += '<span class="badge-exp me-1">+' + (clasificaciones.length - 3) + '</span>';
+            if (clasifOrdenadas.length > 3) {
+                badgesExp += '<span class="badge-exp me-1">+' + (clasifOrdenadas.length - 3) + '</span>';
             }
 
             // Badges de formación
@@ -387,6 +540,18 @@
     function renderizarDetalle(persona) {
         var html = '<div class="persona-detalle" onclick="event.stopPropagation()">';
 
+        // Botón Generar HV
+        html += '<div class="d-flex justify-content-end mb-2">';
+        html += '<button id="btnHV_' + persona.cedula + '" class="btn-copiar" onclick="event.stopPropagation(); generarHV(\'' + persona.cedula + '\')" style="font-size:0.75rem; padding:0.3rem 0.7rem;">';
+        html += '<i class="fas fa-file-alt me-1"></i> Generar Hoja de Vida';
+        html += '</button>';
+        html += '</div>';
+
+        // Obtener filtros activos para resaltado
+        var filtroClasifActivo = document.getElementById('filtroClasificacion') ? document.getElementById('filtroClasificacion').value : '';
+        var filtroTipoActivo = document.getElementById('filtroTipoProy') ? document.getElementById('filtroTipoProy').value : '';
+        var hayFiltroExp = filtroClasifActivo || filtroTipoActivo;
+
         // Experiencia
         if (persona.experiencias.length > 0) {
             html += '<div class="detalle-section-title"><i class="fas fa-briefcase me-1"></i> Experiencia Laboral (' + persona.experiencias.length + ')</div>';
@@ -394,8 +559,22 @@
                 var dedicVal = parseDedicacion(exp.dedicacion);
                 var dedicPct = Math.round(dedicVal * 100);
                 var barColor = getDedicacionColor(dedicVal);
+
+                // Resaltado: ¿coincide con el filtro activo?
+                var esRelevante = true;
+                if (hayFiltroExp) {
+                    esRelevante = false;
+                    if (filtroClasifActivo && exp.clasificacion === filtroClasifActivo) esRelevante = true;
+                    if (filtroTipoActivo && exp.tipoproy === filtroTipoActivo) esRelevante = true;
+                }
+                var estiloItem = hayFiltroExp
+                    ? (esRelevante
+                        ? 'border-left: 3px solid #C17B50; padding-left: 0.7rem;'
+                        : 'opacity: 0.45; border-left: 3px solid transparent; padding-left: 0.7rem;')
+                    : '';
+
                 html += `
-                <div class="detalle-item">
+                <div class="detalle-item" style="${estiloItem}">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <strong>Empresa:</strong> ${exp.empresa || '—'}
@@ -410,12 +589,53 @@
                     </div>
                     <div style="margin-top: 0.2rem;">
                         <strong>Periodo:</strong> ${exp.fechaIn || '—'} → ${exp.fechaFin || 'Actual'}
+                        ${exp.sector ? '&nbsp;·&nbsp; <strong>Sector:</strong> ' + exp.sector : ''}
                         &nbsp;·&nbsp; <strong>Clasif.:</strong> ${exp.clasificacion || '—'}
                         &nbsp;·&nbsp; <strong>Tipo:</strong> ${exp.tipoproy || '—'}
                     </div>
                     ${exp.objeto ? '<div style="margin-top: 0.2rem;"><strong>Objeto:</strong> ' + exp.objeto + '</div>' : ''}
                 </div>`;
             });
+        }
+
+        // Tabla resumen: Experiencia por Clasificación
+        if (persona.experiencias.length > 0) {
+            var porClasif = calcularAniosPorCategoria(persona.experiencias, 'clasificacion');
+            var clavesClasif = Object.keys(porClasif).sort(function (a, b) { return porClasif[b] - porClasif[a]; });
+            if (clavesClasif.length > 0) {
+                html += '<div class="detalle-section-title mt-3"><i class="fas fa-layer-group me-1"></i> Experiencia por Clasificación</div>';
+                html += '<table style="width:100%;border-collapse:collapse;font-size:0.82rem;margin-top:0.3rem;">';
+                html += '<thead><tr style="border-bottom:1px solid rgba(255,255,255,0.1);color:#8B919A;text-align:left;">';
+                html += '<th style="padding:0.35rem 0.6rem;">Clasificación</th>';
+                html += '<th style="padding:0.35rem 0.6rem;text-align:right;">Años</th>';
+                html += '</tr></thead><tbody>';
+                clavesClasif.forEach(function (c) {
+                    html += '<tr style="border-bottom:1px solid rgba(255,255,255,0.04);">';
+                    html += '<td style="padding:0.35rem 0.6rem;color:#E0E0E0;">' + c + '</td>';
+                    html += '<td style="padding:0.35rem 0.6rem;text-align:right;color:#C17B50;font-weight:600;">' + porClasif[c] + '</td>';
+                    html += '</tr>';
+                });
+                html += '</tbody></table>';
+            }
+
+            // Tabla resumen: Experiencia por Tipo de Proyecto
+            var porTipo = calcularAniosPorCategoria(persona.experiencias, 'tipoproy');
+            var clavesTipo = Object.keys(porTipo).sort(function (a, b) { return porTipo[b] - porTipo[a]; });
+            if (clavesTipo.length > 0) {
+                html += '<div class="detalle-section-title mt-3"><i class="fas fa-project-diagram me-1"></i> Experiencia por Tipo de Proyecto</div>';
+                html += '<table style="width:100%;border-collapse:collapse;font-size:0.82rem;margin-top:0.3rem;">';
+                html += '<thead><tr style="border-bottom:1px solid rgba(255,255,255,0.1);color:#8B919A;text-align:left;">';
+                html += '<th style="padding:0.35rem 0.6rem;">Tipo de Proyecto</th>';
+                html += '<th style="padding:0.35rem 0.6rem;text-align:right;">Años</th>';
+                html += '</tr></thead><tbody>';
+                clavesTipo.forEach(function (t) {
+                    html += '<tr style="border-bottom:1px solid rgba(255,255,255,0.04);">';
+                    html += '<td style="padding:0.35rem 0.6rem;color:#E0E0E0;">' + t + '</td>';
+                    html += '<td style="padding:0.35rem 0.6rem;text-align:right;color:#C17B50;font-weight:600;">' + porTipo[t] + '</td>';
+                    html += '</tr>';
+                });
+                html += '</tbody></table>';
+            }
         }
 
         // Formación
@@ -469,6 +689,186 @@
             </div>`;
         document.getElementById('estadoBusqueda').textContent = 'Error';
         document.getElementById('estadoBusqueda').className = 'badge bg-danger';
+    }
+
+    // =============================================
+    // FILTROS ACTIVOS (CHIPS)
+    // =============================================
+
+    function actualizarFiltrosActivos() {
+        var container = document.getElementById('filtrosActivos');
+        var btnCopiar = document.getElementById('btnCopiar');
+        if (!container) return;
+
+        var chips = [];
+        var filtros = [
+            { id: 'filtroSector', label: 'Sector' },
+            { id: 'filtroClasificacion', label: 'Clasificación' },
+            { id: 'filtroTipoProy', label: 'Tipo' },
+            { id: 'filtroNivelForm', label: 'Formación' },
+            { id: 'filtroDedicacion', label: 'Dedicación' }
+        ];
+
+        filtros.forEach(function (f) {
+            var el = document.getElementById(f.id);
+            if (el && el.value) {
+                var texto = f.label + ': ' + el.options[el.selectedIndex].text;
+                chips.push('<span class="filtro-chip">' + texto +
+                    ' <span class="chip-close" onclick="quitarFiltro(\'' + f.id + '\')">&times;</span></span>');
+            }
+        });
+
+        // Filtro texto
+        var texto = document.getElementById('filtroBusqueda').value.trim();
+        if (texto) {
+            chips.push('<span class="filtro-chip"><i class="fas fa-search" style="font-size:0.6rem;"></i> "' + texto +
+                '" <span class="chip-close" onclick="quitarFiltro(\'filtroBusqueda\')">&times;</span></span>');
+        }
+
+        // Filtro años
+        var anios = document.getElementById('filtroAnios').value;
+        if (anios) {
+            chips.push('<span class="filtro-chip">≥ ' + anios + ' años' +
+                ' <span class="chip-close" onclick="quitarFiltro(\'filtroAnios\')">&times;</span></span>');
+        }
+
+        container.innerHTML = chips.join('');
+
+        // Mostrar/ocultar botón copiar
+        if (btnCopiar) {
+            btnCopiar.style.display = personasFiltradas.length > 0 ? 'inline-block' : 'none';
+        }
+    }
+
+    function quitarFiltro(id) {
+        var el = document.getElementById(id);
+        if (el) {
+            el.value = '';
+            aplicarFiltros();
+        }
+    }
+
+    // =============================================
+    // COPIAR LISTADO
+    // =============================================
+
+    function copiarListado() {
+        if (personasFiltradas.length === 0) return;
+
+        var lineas = [];
+        lineas.push('Candidatos encontrados: ' + personasFiltradas.length);
+        lineas.push('Fecha: ' + new Date().toLocaleDateString('es-CO'));
+        lineas.push('---');
+
+        personasFiltradas.forEach(function (p, i) {
+            var anios = calcularAniosExperiencia(p.experiencias);
+            var porClasif = calcularAniosPorCategoria(p.experiencias, 'clasificacion');
+            var desglose = Object.keys(porClasif).sort(function (a, b) { return porClasif[b] - porClasif[a]; })
+                .map(function (c) { return c + ' (' + porClasif[c] + ')'; }).join(', ');
+
+            var formacion = p.formaciones.map(function (f) { return f.nivel + ': ' + f.titulo; }).join(', ');
+
+            var linea = (i + 1) + '. ' + (p.nombre || 'Sin nombre') + ' — ' + anios + ' años exp.';
+            if (desglose) linea += ' — ' + desglose;
+            if (formacion) linea += ' — ' + formacion;
+            lineas.push(linea);
+        });
+
+        var textoFinal = lineas.join('\n');
+
+        // Copiar al portapapeles
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(textoFinal).then(function () {
+                _mostrarCopiado();
+            });
+        } else {
+            var ta = document.createElement('textarea');
+            ta.value = textoFinal;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            _mostrarCopiado();
+        }
+    }
+
+    function _mostrarCopiado() {
+        var btn = document.getElementById('btnCopiar');
+        btn.classList.add('copiado');
+        btn.innerHTML = '<i class="fas fa-check"></i> Copiado';
+        setTimeout(function () {
+            btn.classList.remove('copiado');
+            btn.innerHTML = '<i class="fas fa-copy"></i> Copiar listado';
+        }, 2000);
+    }
+
+    // =============================================
+    // GENERAR HOJA DE VIDA
+    // =============================================
+
+    function generarHV(cedula) {
+        var btn = document.getElementById('btnHV_' + cedula);
+        if (!btn) return;
+
+        // Estado: cargando
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Generando...';
+        btn.style.opacity = '0.7';
+
+        google.script.run
+            .withSuccessHandler(function (jsonStr) {
+                try {
+                    var result = JSON.parse(jsonStr);
+                    if (result.success) {
+                        btn.innerHTML = '<i class="fas fa-check me-1"></i> HV Generada';
+                        btn.style.background = 'rgba(46,204,113,0.15)';
+                        btn.style.borderColor = 'rgba(46,204,113,0.3)';
+                        btn.style.color = '#2ECC71';
+
+                        // Abrir la carpeta en nueva pestaña
+                        var link = document.createElement('a');
+                        link.href = result.url;
+                        link.target = '_blank';
+                        link.click();
+
+                        // Restaurar botón después de 4 segundos
+                        setTimeout(function () {
+                            btn.disabled = false;
+                            btn.innerHTML = '<i class="fas fa-file-alt me-1"></i> Generar Hoja de Vida';
+                            btn.style.background = '';
+                            btn.style.borderColor = '';
+                            btn.style.color = '';
+                            btn.style.opacity = '';
+                        }, 4000);
+                    } else {
+                        btn.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i> Error';
+                        btn.style.color = '#E74C3C';
+                        alert('Error: ' + result.error);
+                        setTimeout(function () {
+                            btn.disabled = false;
+                            btn.innerHTML = '<i class="fas fa-file-alt me-1"></i> Generar Hoja de Vida';
+                            btn.style.color = '';
+                            btn.style.opacity = '';
+                        }, 3000);
+                    }
+                } catch (e) {
+                    btn.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i> Error';
+                    btn.disabled = false;
+                    btn.style.opacity = '';
+                }
+            })
+            .withFailureHandler(function (err) {
+                btn.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i> Error';
+                btn.style.color = '#E74C3C';
+                btn.disabled = false;
+                btn.style.opacity = '';
+                alert('Error al generar HV: ' + err.message);
+                setTimeout(function () {
+                    btn.innerHTML = '<i class="fas fa-file-alt me-1"></i> Generar Hoja de Vida';
+                    btn.style.color = '';
+                }, 3000);
+            })
+            .generarHojaDeVida(cedula);
     }
 
 </script>

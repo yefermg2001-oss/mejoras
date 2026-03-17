@@ -1,6 +1,6 @@
 var platilla = "1uwK7yw5_qezX1TXufpC8wun9m6USjTfc20v8UDY8V_A";
 var destinoID = "1eGmykRU_OIlb4K9hPUfVSwEcTCXcOP9b"
-var ssId = "11q-sSgjnXKFy1xTCFIvpEvZaL16iBtAEa7TdPaq0lDs";
+var ssId = "1Q7KH2rEwvxJubf2UKf2zdJPvI8m2c093S_rxJr3juHY";
 var ssDB = "Registro";
 var ssDB2 = 'Formación';
 var ssDB3 = 'Mapa de Conocimiento';

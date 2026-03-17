@@ -1,8 +1,8 @@
 //Variables globales
 //var rutaWeb =  google.script.url();
-var rutaWeb = "https://script.google.com/a/macros/sedic.com.co/s/AKfycbxVrkEvUwCCzEDr0gtqy1iyRzRc0l6DASCHICRtTn0NHgjRZIF6R69T_hlbXGNZdEbQ/exec"
+var rutaWeb = "https://script.google.com/a/macros/sedic.com.co/s/AKfycbyZw-cnwlWNcFyqx7sCkvLAw6SiCgPOOKZv4quxK6BqIgRbKWwDEGgt3Iz3GqYsaszkZA/exec"
 //var rutaWeb = "https://script.google.com/macros/s/AKfycbz2aHx3QLV7MkP8h7_LXlSsxsgDWq4XH3t0Xbb0vek/dev";
-var ssId = "11q-sSgjnXKFy1xTCFIvpEvZaL16iBtAEa7TdPaq0lDs";
+var ssId = "1Q7KH2rEwvxJubf2UKf2zdJPvI8m2c093S_rxJr3juHY";
 var ssDb = "BD";
  
 
@@ -520,6 +520,7 @@ function buscarTalento() {
   var clasificacionesSet = {};
   var tiposProyectoSet = {};
   var nivelesFormacionSet = {};
+  var sectoresSet = {};
   
   // Procesar Registro (col 0=Fecha, 1=Nombre, 2=Correo, 3=Cédula)
   // Buscar columnas dinámicamente
@@ -567,10 +568,12 @@ function buscarTalento() {
       fechaFin = Utilities.formatDate(fechaFin, SpreadsheetApp.getActive().getSpreadsheetTimeZone(), 'yyyy-MM-dd');
     }
     
+    var sector = (dataExp[i][9] || "").toString().trim();
     var clasificacion = (dataExp[i][10] || "").toString().trim();
     var tipoProy = (dataExp[i][11] || "").toString().trim();
     var dedicacion = (dataExp[i][12] || "").toString().trim();
     
+    if (sector) sectoresSet[sector] = true;
     if (clasificacion) clasificacionesSet[clasificacion] = true;
     if (tipoProy) tiposProyectoSet[tipoProy] = true;
     
@@ -581,6 +584,7 @@ function buscarTalento() {
       fechaFin: fechaFin.toString(),
       objeto: (dataExp[i][6] || "").toString(),
       funciones: (dataExp[i][7] || "").toString(),
+      sector: sector,
       clasificacion: clasificacion,
       tipoproy: tipoProy,
       dedicacion: dedicacion
@@ -638,6 +642,7 @@ function buscarTalento() {
   var resultado = {
     personas: personas,
     filtros: {
+      sectores: Object.keys(sectoresSet).sort(),
       clasificaciones: Object.keys(clasificacionesSet).sort(),
       tiposProyecto: Object.keys(tiposProyectoSet).sort(),
       nivelesFormacion: Object.keys(nivelesFormacionSet).sort()
