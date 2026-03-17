@@ -8,7 +8,7 @@
  * Copia los certificados a la carpeta del candidato.
  */
 
-var PLANTILLA_HV_ID = "1DiqKaHYPPPfugr1bx7qTgcUSB7gcAToD";
+var PLANTILLA_HV_ID = "1-ilRj2bjR4jK3IfHXwvUb9J5aetk-EKY9JWDvfEOpqk";
 var CARPETA_HV_ID = "1G7oYj2_nEhQugM0QaICz-VCml9guLKF5";
 
 /**
@@ -26,9 +26,10 @@ function generarHojaDeVida(cedula) {
     // 1. LEER DATOS
     // =============================================
 
-    // Registro
+    // Registro - con búsqueda dinámica de columnas por nombre de encabezado
     var dataReg = ss.getSheetByName('Registro').getDataRange().getValues();
-    var regCedulaCol = _findCol(dataReg[0], "Cédula");
+    var regHeaders = dataReg[0];
+    var regCedulaCol = _findCol(regHeaders, "Cédula");
     var personaRow = null;
     for (var i = 1; i < dataReg.length; i++) {
       if (dataReg[i][regCedulaCol].toString().trim() == cedula) {
@@ -38,6 +39,20 @@ function generarHojaDeVida(cedula) {
     }
     if (!personaRow) {
       return JSON.stringify({ success: false, error: "No se encontró la persona con cédula " + cedula });
+    }
+
+    // Mapear columnas del Registro por nombre de encabezado
+    var _regCol = function(nombre) {
+      for (var i = 0; i < regHeaders.length; i++) {
+        if (regHeaders[i].toString().trim().toLowerCase().indexOf(nombre.toLowerCase()) >= 0) return i;
+      }
+      return -1;
+    };
+
+    // Log para debug: imprimir todos los encabezados del Registro
+    Logger.log("=== ENCABEZADOS REGISTRO ===");
+    for (var h = 0; h < regHeaders.length; h++) {
+      Logger.log("Col " + h + ": " + regHeaders[h]);
     }
 
     // Formación
@@ -96,7 +111,9 @@ function generarHojaDeVida(cedula) {
       }
     }
 
-    var nombrePersona = (personaRow[1] || "Sin nombre").toString().trim();
+    // Obtener nombre dinámicamente
+    var colNombre = _regCol("nombre");
+    var nombrePersona = colNombre >= 0 ? (personaRow[colNombre] || "Sin nombre").toString().trim() : "Sin nombre";
 
     // =============================================
     // 2. CREAR CARPETA Y COPIAR PLANTILLA
@@ -125,7 +142,7 @@ function generarHojaDeVida(cedula) {
     var docId = copia.getId();
 
     // =============================================
-    // 3. LLENAR DATOS PERSONALES (replaceText)
+    // 3. LLENAR DATOS PERSONALES (búsqueda dinámica por encabezado)
     // =============================================
 
     var doc = DocumentApp.openById(docId);
@@ -133,10 +150,30 @@ function generarHojaDeVida(cedula) {
 
     body.replaceText("\\{\\{NOMBRE\\}\\}", nombrePersona);
     body.replaceText("\\{\\{CEDULA\\}\\}", cedula);
-    body.replaceText("\\{\\{CIUDAD_NAC\\}\\}", (personaRow[4] || "").toString());
-    body.replaceText("\\{\\{CORREO\\}\\}", (personaRow[2] || "").toString());
-    body.replaceText("\\{\\{TELEFONO\\}\\}", (personaRow[20] || "").toString().trim());
-    body.replaceText("\\{\\{MUNICIPIO\\}\\}", (personaRow[8] || "").toString());
+
+    // Ciudad y Fecha de Nacimiento — combinar lugar + fecha de cédula
+    var colCedulaLugar = _regCol("cedulaLugar");
+    var colCedulaFecha = _regCol("cedulaFecha");
+    var ciudadNac = colCedulaLugar >= 0 ? (personaRow[colCedulaLugar] || "").toString() : "";
+    var fechaNac = colCedulaFecha >= 0 ? _formatFecha(personaRow[colCedulaFecha]) : "";
+    var ciudadYFecha = ciudadNac + (fechaNac ? ", " + fechaNac : "");
+    body.replaceText("\\{\\{CIUDAD_NAC\\}\\}", ciudadYFecha);
+
+    // Correo
+    var colCorreo = _regCol("correo");
+    body.replaceText("\\{\\{CORREO\\}\\}", colCorreo >= 0 ? (personaRow[colCorreo] || "").toString() : "");
+
+    // Teléfono — buscar por nombre de encabezado
+    var colTel = _regCol("tel");
+    if (colTel < 0) colTel = _regCol("celular");
+    if (colTel < 0) colTel = _regCol("telefono");
+    var telefono = colTel >= 0 ? (personaRow[colTel] || "").toString().trim() : "";
+    body.replaceText("\\{\\{TELEFONO\\}\\}", telefono);
+
+    // Municipio
+    var colMunicipio = _regCol("lugarresidencia");
+    if (colMunicipio < 0) colMunicipio = _regCol("municipio");
+    body.replaceText("\\{\\{MUNICIPIO\\}\\}", colMunicipio >= 0 ? (personaRow[colMunicipio] || "").toString() : "");
     body.replaceText("\\{\\{DEPARTAMENTO\\}\\}", "");
 
     // Fecha de vinculación: experiencia más antigua con SEDIC
@@ -169,12 +206,22 @@ function generarHojaDeVida(cedula) {
     // =============================================
 
     var nivelMax = _getNivelMaximo(formaciones);
-    // Reemplazar la celda correspondiente con X
     var tablas = body.getTables();
-    if (tablas.length > 1) {
-      var tablaDatos = tablas[1]; // Table 1 = datos personales
-      // Row 1: PROFESIONAL (col 7), TECNOLOGO (col 9), TÉCNICO (col 12)
-      // Row 2: BACHILLER (col 7), NINGUNA (col 9)
+    
+    // Buscar la tabla de datos personales por contenido (no por índice)
+    var tablaDatos = null;
+    for (var t = 0; t < tablas.length; t++) {
+      try {
+        var cellText = tablas[t].getCell(0, 0).getText();
+        if (cellText.indexOf("DATOS PERSONALES") >= 0) {
+          tablaDatos = tablas[t];
+          break;
+        }
+      } catch (e) { }
+    }
+    
+    // Marcar nivel de educación con X
+    if (tablaDatos) {
       try {
         if (nivelMax === "PROFESIONAL" || nivelMax === "MAESTRÍA" || nivelMax === "ESPECIALIZACIÓN" ||
           nivelMax === "DOCTORADO" || nivelMax === "POSGRADO") {
@@ -186,7 +233,7 @@ function generarHojaDeVida(cedula) {
         } else if (nivelMax === "BACHILLER") {
           tablaDatos.getCell(2, 8).setText("X");
         } else {
-          tablaDatos.getCell(2, 10).setText("X"); // Ninguna de las anteriores
+          tablaDatos.getCell(2, 10).setText("X");
         }
       } catch (e) {
         Logger.log("Error al marcar nivel educación: " + e.toString());
@@ -197,9 +244,24 @@ function generarHojaDeVida(cedula) {
     // 5. FORMACIÓN ACADÉMICA + INFO LABORAL (Table 1, Row 10)
     // =============================================
 
-    if (tablas.length > 1) {
-      var tablaGrande = tablas[1];
-      var filaTemplate = 10; // Row 10 es la fila con los marcadores
+    // Usar la tabla de datos personales encontrada arriba
+    if (tablaDatos) {
+      var tablaGrande = tablaDatos;
+      
+      // Buscar la fila template (la que contiene los marcadores {{F_UNIVERSIDAD}})
+      var filaTemplate = -1;
+      for (var r = 0; r < tablaGrande.getNumRows(); r++) {
+        try {
+          var cellText = tablaGrande.getCell(r, 0).getText();
+          if (cellText.indexOf("{{F_UNIVERSIDAD}}") >= 0 || cellText.indexOf("F_UNIVERSIDAD") >= 0) {
+            filaTemplate = r;
+            break;
+          }
+        } catch (e) { }
+      }
+      
+      // Si no encontramos marcador, intentar la última fila
+      if (filaTemplate < 0) filaTemplate = tablaGrande.getNumRows() - 1;
 
       // Llenar la primera fila con la primera formación (si hay)
       if (formaciones.length > 0) {
@@ -348,6 +410,14 @@ function _formatFecha(valor) {
     var d = valor.getDate().toString().padStart(2, '0');
     var m = (valor.getMonth() + 1).toString().padStart(2, '0');
     var y = valor.getFullYear();
+    return d + "/" + m + "/" + y;
+  }
+  // Manejar números seriales de fecha (ej: 37219 = fecha de Excel/Sheets)
+  if (typeof valor === 'number' && valor > 10000 && valor < 100000) {
+    var fecha = new Date((valor - 25569) * 86400 * 1000);
+    var d = fecha.getDate().toString().padStart(2, '0');
+    var m = (fecha.getMonth() + 1).toString().padStart(2, '0');
+    var y = fecha.getFullYear();
     return d + "/" + m + "/" + y;
   }
   return valor.toString();
