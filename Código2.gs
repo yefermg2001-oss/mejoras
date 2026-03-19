@@ -361,6 +361,11 @@ function appendExperienciaRow(rowData) {
  * @param {string} fechaIn
  */
 function eliminarExperienciaRow(cedula, empresa, cargo, fechaIn) {
+  // Verificar que el usuario solo borre sus propios datos
+  if (!_verificarCedulaPropia(cedula)) {
+    Logger.log("SEGURIDAD: Intento no autorizado de borrar experiencia de cédula " + cedula);
+    return false;
+  }
   var ss = SpreadsheetApp.openById(ssId);
   var db = ss.getSheetByName("Experiencia");
   var dataTable = db.getDataRange().getValues();
@@ -478,6 +483,11 @@ function appendFormacionRow(rowData) {
  * @param {string} titulo
  */
 function eliminarFormacionRow(cedula, nivelEsc, titulo) {
+  // Verificar que el usuario solo borre sus propios datos
+  if (!_verificarCedulaPropia(cedula)) {
+    Logger.log("SEGURIDAD: Intento no autorizado de borrar formación de cédula " + cedula);
+    return false;
+  }
   var ss = SpreadsheetApp.openById(ssId);
   var db = ss.getSheetByName("Formación");
   var dataTable = db.getDataRange().getValues();
@@ -528,6 +538,11 @@ function appendPersonaRow(rowData) {
  * @param {string} parentesco
  */
 function eliminarPersonaRow(cedula, nombre, parentesco) {
+  // Verificar que el usuario solo borre sus propios datos
+  if (!_verificarCedulaPropia(cedula)) {
+    Logger.log("SEGURIDAD: Intento no autorizado de borrar persona a cargo de cédula " + cedula);
+    return false;
+  }
   var ss = SpreadsheetApp.openById(ssId);
   var db = ss.getSheetByName("Personas a cargo");
   var dataTable = db.getDataRange().getValues();
@@ -573,6 +588,11 @@ function appendHijoRow(rowData) {
  * @param {string} fecha
  */
 function eliminarHijoRow(cedula, nombre, fecha) {
+  // Verificar que el usuario solo borre sus propios datos
+  if (!_verificarCedulaPropia(cedula)) {
+    Logger.log("SEGURIDAD: Intento no autorizado de borrar hijo de cédula " + cedula);
+    return false;
+  }
   var ss = SpreadsheetApp.openById(ssId);
   var db = ss.getSheetByName("Hijos");
   var dataTable = db.getDataRange().getValues();
@@ -729,6 +749,11 @@ function appendInfoLabRow(rowData) {
  * @param {string} tipo
  */
 function eliminarInfoLabRow(cedula, especialidad, tipo) {
+  // Verificar que el usuario solo borre sus propios datos
+  if (!_verificarCedulaPropia(cedula)) {
+    Logger.log("SEGURIDAD: Intento no autorizado de borrar info laboral de cédula " + cedula);
+    return false;
+  }
   var ss = SpreadsheetApp.openById(ssId);
   var db = ss.getSheetByName("Información Laboral");
   var dataTable = db.getDataRange().getValues();

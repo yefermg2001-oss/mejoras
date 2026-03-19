@@ -19,6 +19,13 @@ var CARPETA_HV_ID = "1G7oYj2_nEhQugM0QaICz-VCml9guLKF5";
  */
 function generarHojaDeVida(cedula) {
   try {
+    // ↓↓ VERIFICACIÓN DE SEGURIDAD — Solo admins ↓↓
+    if (!_esAdmin()) {
+      Logger.log("SEGURIDAD: Usuario no autorizado intentó generar HV para cédula " + cedula);
+      return JSON.stringify({ success: false, error: "No tiene permisos para generar hojas de vida" });
+    }
+    // ↑↑ FIN VERIFICACIÓN ↑↑
+
     cedula = cedula.toString().trim();
     var ss = SpreadsheetApp.openById(ssId);
 
@@ -169,18 +176,45 @@ function generarHojaDeVida(cedula) {
     var colCorreo = _regCol("correo");
     body.replaceText("\\{\\{CORREO\\}\\}", colCorreo >= 0 ? (personaRow[colCorreo] || "").toString() : "");
 
-    // Teléfono — buscar por nombre de encabezado
-    var colTel = _regCol("tel");
-    if (colTel < 0) colTel = _regCol("celular");
-    if (colTel < 0) colTel = _regCol("telefono");
-    var telefono = colTel >= 0 ? (personaRow[colTel] || "").toString().trim() : "";
+    // Teléfono — primero buscar en Vivienda, luego en Registro
+    var dbViv = ss.getSheetByName('Vivienda');
+    var viviendaRow = null;
+    if (dbViv) {
+      var dataViv = dbViv.getDataRange().getValues();
+      var vivCedulaCol = _findCol(dataViv[0], "Cédula");
+      for (var i = 1; i < dataViv.length; i++) {
+        if (dataViv[i][vivCedulaCol].toString().trim() == cedula) {
+          viviendaRow = dataViv[i];
+          break;
+        }
+      }
+    }
+
+    // Teléfono: Vivienda col 8 (telefono) o col 9 (celular), o Registro como fallback
+    var telefono = "";
+    if (viviendaRow) {
+      telefono = (viviendaRow[9] || viviendaRow[8] || "").toString().trim();
+    }
+    if (!telefono) {
+      var colTel = _regCol("tel");
+      if (colTel < 0) colTel = _regCol("celular");
+      if (colTel >= 0) telefono = (personaRow[colTel] || "").toString().trim();
+    }
     body.replaceText("\\{\\{TELEFONO\\}\\}", telefono);
 
-    // Municipio
-    var colMunicipio = _regCol("lugarresidencia");
-    if (colMunicipio < 0) colMunicipio = _regCol("municipio");
-    body.replaceText("\\{\\{MUNICIPIO\\}\\}", colMunicipio >= 0 ? (personaRow[colMunicipio] || "").toString() : "");
-    body.replaceText("\\{\\{DEPARTAMENTO\\}\\}", "");
+    // Municipio y Departamento — desde Vivienda (ciudad col 6, departamento col 5)
+    var municipio = "";
+    var departamento = "";
+    if (viviendaRow) {
+      municipio = (viviendaRow[6] || "").toString();
+      departamento = (viviendaRow[5] || "").toString();
+    } else {
+      // Fallback: buscar en Registro
+      var colMunicipio = _regCol("lugarresidencia");
+      if (colMunicipio >= 0) municipio = (personaRow[colMunicipio] || "").toString();
+    }
+    body.replaceText("\\{\\{MUNICIPIO\\}\\}", municipio);
+    body.replaceText("\\{\\{DEPARTAMENTO\\}\\}", departamento);
 
     // Fecha de vinculación: experiencia más antigua con SEDIC
     var fechaVinc = "";
@@ -510,21 +544,38 @@ function _llenarExpDetalle(tabla, rowIdx, experiencia) {
   try {
     var row = tabla.getRow(rowIdx);
     
-    // Columna 0: Objeto + Empresa
-    var objTexto = experiencia.objeto + "\n" + experiencia.empresa;
-    row.getCell(0).setText(objTexto);
+    // Columna 0: Objeto + Empresa — TODO en negrilla
+    var cell0 = row.getCell(0);
+    cell0.clear();
+    var p0 = cell0.appendParagraph("");
+    p0.appendText(experiencia.objeto + "\n" + experiencia.empresa).setBold(true);
     
-    // Columna 1: Cargo + Dedicación + Funciones (todo junto con saltos de línea)
-    var detalleTexto = "CARGO: " + experiencia.cargo + 
-      "\n% DEDICACIÓN: " + _formatDedicacion(experiencia.dedicacion) +
-      "\nFUNCIONES: " + experiencia.funciones;
-    row.getCell(1).setText(detalleTexto);
+    // Columna 1: Cargo, Dedicación, Funciones con formato mixto
+    var cell1 = row.getCell(1);
+    cell1.clear();
     
-    // Columna 2: Fecha inicio
-    row.getCell(2).setText(experiencia.fechaIn);
+    // CARGO: todo en negrilla
+    var pCargo = cell1.appendParagraph("");
+    pCargo.appendText("CARGO: " + experiencia.cargo).setBold(true);
     
-    // Columna 3: Fecha fin
-    row.getCell(3).setText(experiencia.fechaFin);
+    // % DEDICACIÓN: todo en negrilla
+    var pDedic = cell1.appendParagraph("");
+    pDedic.appendText("% DEDICACIÓN: " + _formatDedicacion(experiencia.dedicacion)).setBold(true);
+    
+    // FUNCIONES: título en negrilla, texto sin negrilla
+    var pFunc = cell1.appendParagraph("");
+    pFunc.appendText("FUNCIONES: ").setBold(true);
+    pFunc.appendText(experiencia.funciones).setBold(false);
+    
+    // Columna 2: Fecha inicio — sin negrilla
+    var cell2 = row.getCell(2);
+    cell2.clear();
+    cell2.appendParagraph(experiencia.fechaIn);
+    
+    // Columna 3: Fecha fin — sin negrilla
+    var cell3 = row.getCell(3);
+    cell3.clear();
+    cell3.appendParagraph(experiencia.fechaFin);
 
   } catch (e) {
     Logger.log("Error llenando exp detalle fila " + rowIdx + ": " + e.toString());

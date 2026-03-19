@@ -5,7 +5,6 @@ var rutaWeb = "https://script.google.com/a/macros/sedic.com.co/s/AKfycbyZw-cnwlW
 var ssId = "1Q7KH2rEwvxJubf2UKf2zdJPvI8m2c093S_rxJr3juHY";
 var ssDb = "BD";
  
-
 //Obtenemos correo y nombre para mostrar en el front
 function userId() {
 
@@ -253,6 +252,11 @@ function appendMapaRow(rowData) {
  * Elimina una fila específica por cédula + tipo + conocimiento.
  */
 function eliminarMapaRow(cedula, tipo, conocimiento) {
+  // Verificar que el usuario solo borre sus propios datos
+  if (!_verificarCedulaPropia(cedula)) {
+    Logger.log("SEGURIDAD: Intento no autorizado de borrar mapa de cédula " + cedula);
+    return false;
+  }
   var ss = SpreadsheetApp.openById(ssId);
   var db = ss.getSheetByName("Mapa de Conocimiento");
   var data = db.getDataRange().getValues();
@@ -489,14 +493,43 @@ function checkAcceso() {
 }
 
 
+// =============================================
+// FUNCIONES DE SEGURIDAD
+// =============================================
+
+/**
+ * Wrapper de checkAcceso() para uso interno.
+ * Usa columna "Acceso", valor "admin" (minúscula).
+ */
+function _esAdmin() {
+  return checkAcceso();
+}
+
+/**
+ * Verifica que la cédula pertenece al usuario logueado.
+ * Admins pueden operar sobre cualquier cédula.
+ */
+function _verificarCedulaPropia(cedula) {
+  if (_esAdmin()) return true;
+  var user = userDatos();
+  return user.cedula.toString().trim() == cedula.toString().trim();
+}
+
+
 /**
  * @function buscarTalento
- * Carga TODOS los datos de Registro, Experiencia y Formación,
- * los cruza por cédula y retorna un JSON consolidado para búsqueda client-side.
- * Solo accesible por admins (validado en el frontend).
+ * Carga TODOS los datos de Registro, Experiencia y Formación.
+ * PROTEGIDA: Solo accesible por administradores.
  * @returns {string} JSON con estructura { personas: [...], filtros: {...} }
  */
 function buscarTalento() {
+  // ↓↓ VERIFICACIÓN DE SEGURIDAD ↓↓
+  if (!_esAdmin()) {
+    Logger.log("SEGURIDAD: Usuario no autorizado intentó acceder a buscarTalento()");
+    return JSON.stringify({ error: "No tiene permisos para acceder a esta función", personas: [] });
+  }
+  // ↑↑ FIN VERIFICACIÓN ↑↑
+  
   var ss = SpreadsheetApp.openById(ssId);
   
   // --- Leer Registro ---
